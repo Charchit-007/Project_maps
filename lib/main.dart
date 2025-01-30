@@ -89,14 +89,6 @@ class _MapsPageState extends State<MapsPage> {
           _routePoints = coordinates
               .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
               .toList();
-<<<<<<< HEAD
-
-          _routeInfo = {
-            'distance': route['distance'], // in meters
-            'duration': route['duration'], // in seconds
-          };  
-=======
->>>>>>> 4cb163823037482f502657ef960115dee7174e61
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -107,7 +99,7 @@ class _MapsPageState extends State<MapsPage> {
       );
     } finally {
       setState(() {
-        _isLoading = false;       // ek baar setup ho gaya, then loading band kardo
+        _isLoading = false;
       });
     }
   }
@@ -149,60 +141,9 @@ class _MapsPageState extends State<MapsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Route Map"),
-<<<<<<< HEAD
-        actions: [
-          // Traffic toggle button
-          IconButton(
-            icon: Icon(_showTraffic ? Icons.traffic : Icons.traffic_outlined),
-            onPressed: () {
-              setState(() {
-                _showTraffic = !_showTraffic;   // so initially, bool will be made from false ->to True
-              });
-            },
-            tooltip: 'Toggle Traffic View',
-          ),
-        ],
-=======
->>>>>>> 4cb163823037482f502657ef960115dee7174e61
       ),
       body: Column(
         children: [
-<<<<<<< HEAD
-          FlutterMap(
-            options: MapOptions(
-              initialCenter: _origin,
-              initialZoom: 11.0,
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: _getMapUrl(),
-                subdomains: const ['a', 'b', 'c'],
-              ),
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                    points: _routePoints,
-                    strokeWidth: 4.0,
-                    color: Colors.blue,
-                  ),
-                ],
-              ),
-              MarkerLayer(
-                markers: [
-                  _buildMarker(
-                    point: _origin,
-                    color: Colors.red,
-                    icon: Icons.location_searching_outlined,
-                  ),
-                  _buildMarker(
-                    point: _destination,
-                    color: Colors.green,
-                    icon: Icons.location_pin,
-                  ),
-                ],
-              ),
-            ],
-=======
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -218,7 +159,6 @@ class _MapsPageState extends State<MapsPage> {
                 _buildSuggestions(true),
               ],
             ),
->>>>>>> 4cb163823037482f502657ef960115dee7174e61
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
