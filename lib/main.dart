@@ -39,8 +39,7 @@ class _MapsPageState extends State<MapsPage> {
 
   Future<void> _searchLocation(String query, bool isOrigin) async {
     if (query.isEmpty) return;
-
-    try {
+    try { 
       final response = await http.get(Uri.parse(
           'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5'));
 
@@ -57,6 +56,7 @@ class _MapsPageState extends State<MapsPage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error fetching suggestions: $e')),
+        // i dont think we should keep this, as every character we input, if api ko kuch nhi milta for some time; then snackbar display karta hai baar baar
       );
     }
   }
@@ -106,8 +106,7 @@ class _MapsPageState extends State<MapsPage> {
 
   Widget _buildSuggestions(bool isOrigin) {
     final suggestions = isOrigin ? _originSuggestions : _destinationSuggestions;
-
-    return ListView.builder(
+    return ListView.builder(    //creates a dynamic list of location suggestions
       shrinkWrap: true,
       itemCount: suggestions.length,
       itemBuilder: (context, index) {
@@ -165,6 +164,7 @@ class _MapsPageState extends State<MapsPage> {
             child: Column(
               children: [
                 TextField(
+                  // controller - controls the text inside the TextField
                   controller: _destinationController,
                   onChanged: (value) => _searchLocation(value, false),
                   decoration: InputDecoration(
@@ -181,8 +181,8 @@ class _MapsPageState extends State<MapsPage> {
               children: [
                 FlutterMap(
                   options: MapOptions(
-                    center: _origin ?? LatLng(28.7041, 77.1025),
-                    zoom: 11.0,
+                    initialCenter: _origin ?? LatLng(28.7041, 77.1025),   // center and zoom and deprecated so i replaced
+                    initialZoom: 11.0,
                   ),
                   children: [
                     TileLayer(
