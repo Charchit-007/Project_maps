@@ -67,7 +67,7 @@ class _MapsPageState extends State<MapsPage> {
           _routeInfo = {
             'distance': route['distance'], // in meters
             'duration': route['duration'], // in seconds
-          };
+          };  
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -78,7 +78,7 @@ class _MapsPageState extends State<MapsPage> {
       );
     } finally {
       setState(() {
-        _isLoading = false;
+        _isLoading = false;       // ek baar setup ho gaya, then loading band kardo
       });
     }
   }
@@ -140,7 +140,7 @@ class _MapsPageState extends State<MapsPage> {
             icon: Icon(_showTraffic ? Icons.traffic : Icons.traffic_outlined),
             onPressed: () {
               setState(() {
-                _showTraffic = !_showTraffic;
+                _showTraffic = !_showTraffic;   // so initially, bool will be made from false ->to True
               });
             },
             tooltip: 'Toggle Traffic View',
@@ -151,8 +151,8 @@ class _MapsPageState extends State<MapsPage> {
         children: [
           FlutterMap(
             options: MapOptions(
-              center: _origin,
-              zoom: 11.0,
+              initialCenter: _origin,
+              initialZoom: 11.0,
             ),
             children: [
               TileLayer(
@@ -173,7 +173,7 @@ class _MapsPageState extends State<MapsPage> {
                   _buildMarker(
                     point: _origin,
                     color: Colors.red,
-                    icon: Icons.location_on,
+                    icon: Icons.location_searching_outlined,
                   ),
                   _buildMarker(
                     point: _destination,
