@@ -28,28 +28,54 @@ class MapsPage extends StatefulWidget {
 }
 
 class _MapsPageState extends State<MapsPage> {
-  final LatLng _origin = const LatLng(28.7041, 77.1025); // New Delhi
-  final LatLng _destination = const LatLng(28.4595, 77.0266); // Gurugram
+  LatLng? _origin;
+  LatLng? _destination;
   List<LatLng> _routePoints = [];
   bool _isLoading = false;
-  bool _showTraffic = false;
-  Map<String, dynamic> _routeInfo = {};
+  List<dynamic> _originSuggestions = [];
+  List<dynamic> _destinationSuggestions = [];
+  TextEditingController _originController = TextEditingController();
+  TextEditingController _destinationController = TextEditingController();
 
-  @override
-  void initState() {
-    super.initState();
-    _loadRoute();
+  Future<void> _searchLocation(String query, bool isOrigin) async {
+    if (query.isEmpty) return;
+
+    try {
+      final response = await http.get(Uri.parse(
+          'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5'));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          if (isOrigin) {
+            _originSuggestions = data;
+          } else {
+            _destinationSuggestions = data;
+          }
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching suggestions: $e')),
+      );
+    }
   }
 
   Future<void> _loadRoute() async {
+    if (_origin == null || _destination == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter both origin and destination')),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Get route using OSRM
       final String coordinates =
-          '${_origin.longitude},${_origin.latitude};${_destination.longitude},${_destination.latitude}';
+          '${_origin!.longitude},${_origin!.latitude};${_destination!.longitude},${_destination!.latitude}';
 
       final response = await http.get(Uri.parse(
           'http://router.project-osrm.org/route/v1/driving/$coordinates?overview=full&geometries=geojson&annotations=true'));
@@ -63,11 +89,14 @@ class _MapsPageState extends State<MapsPage> {
           _routePoints = coordinates
               .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
               .toList();
+<<<<<<< HEAD
 
           _routeInfo = {
             'distance': route['distance'], // in meters
             'duration': route['duration'], // in seconds
           };  
+=======
+>>>>>>> 4cb163823037482f502657ef960115dee7174e61
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -83,49 +112,35 @@ class _MapsPageState extends State<MapsPage> {
     }
   }
 
-  String _getMapUrl() {
-    if (_showTraffic) {
-      // Using Thunderforest Atlas map style
-      return 'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=4fe4cdb808254e38adb6efd7ed6f807e';
-    }
-    // Default OpenStreetMap layer
-    return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
-  }
+  Widget _buildSuggestions(bool isOrigin) {
+    final suggestions = isOrigin ? _originSuggestions : _destinationSuggestions;
 
-  Widget _buildRouteInfo() {
-    if (_routeInfo.isEmpty) return const SizedBox.shrink();
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: suggestions.length,
+      itemBuilder: (context, index) {
+        final suggestion = suggestions[index];
+        final displayName = suggestion['display_name'];
+        final lat = double.parse(suggestion['lat']);
+        final lon = double.parse(suggestion['lon']);
 
-    final distance =
-        (_routeInfo['distance'] / 1000).toStringAsFixed(2); // Convert to km
-    final duration =
-        (_routeInfo['duration'] / 60).toStringAsFixed(0); // Convert to minutes
-
-    return Positioned(
-      bottom: 16,
-      left: 16,
-      right: 16,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Column(
-                children: [
-                  const Icon(Icons.directions_car),
-                  Text('$distance km'),
-                ],
-              ),
-              Column(
-                children: [
-                  const Icon(Icons.access_time),
-                  Text('$duration mins'),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+        return ListTile(
+          title: Text(displayName),
+          onTap: () {
+            setState(() {
+              if (isOrigin) {
+                _origin = LatLng(lat, lon);
+                _originController.text = displayName;
+                _originSuggestions.clear();
+              } else {
+                _destination = LatLng(lat, lon);
+                _destinationController.text = displayName;
+                _destinationSuggestions.clear();
+              }
+            });
+          },
+        );
+      },
     );
   }
 
@@ -134,6 +149,7 @@ class _MapsPageState extends State<MapsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Route Map"),
+<<<<<<< HEAD
         actions: [
           // Traffic toggle button
           IconButton(
@@ -146,9 +162,12 @@ class _MapsPageState extends State<MapsPage> {
             tooltip: 'Toggle Traffic View',
           ),
         ],
+=======
+>>>>>>> 4cb163823037482f502657ef960115dee7174e61
       ),
-      body: Stack(
+      body: Column(
         children: [
+<<<<<<< HEAD
           FlutterMap(
             options: MapOptions(
               initialCenter: _origin,
@@ -183,35 +202,102 @@ class _MapsPageState extends State<MapsPage> {
                 ],
               ),
             ],
-          ),
-          _buildRouteInfo(),
-          if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(),
+=======
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _originController,
+                  onChanged: (value) => _searchLocation(value, true),
+                  decoration: InputDecoration(
+                    hintText: "Enter Origin",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                _buildSuggestions(true),
+              ],
             ),
+>>>>>>> 4cb163823037482f502657ef960115dee7174e61
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _destinationController,
+                  onChanged: (value) => _searchLocation(value, false),
+                  decoration: InputDecoration(
+                    hintText: "Enter Destination",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                _buildSuggestions(false),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Stack(
+              children: [
+                FlutterMap(
+                  options: MapOptions(
+                    center: _origin ?? LatLng(28.7041, 77.1025),
+                    zoom: 11.0,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      subdomains: const ['a', 'b', 'c'],
+                    ),
+                    PolylineLayer(
+                      polylines: [
+                        Polyline(
+                          points: _routePoints,
+                          strokeWidth: 4.0,
+                          color: Colors.blue,
+                        ),
+                      ],
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        if (_origin != null)
+                          Marker(
+                            point: _origin!,
+                            width: 60,
+                            height: 60,
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.red,
+                              size: 40,
+                            ),
+                          ),
+                        if (_destination != null)
+                          Marker(
+                            point: _destination!,
+                            width: 60,
+                            height: 60,
+                            child: const Icon(
+                              Icons.location_pin,
+                              color: Colors.green,
+                              size: 40,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (_isLoading)
+                  const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
-      // Refresh button
       floatingActionButton: FloatingActionButton(
         onPressed: _loadRoute,
-        child: const Icon(Icons.refresh),
-      ),
-    );
-  }
-
-  Marker _buildMarker({
-    required LatLng point,
-    required Color color,
-    required IconData icon,
-  }) {
-    return Marker(
-      point: point,
-      width: 60,
-      height: 60,
-      child: Icon(
-        icon,
-        color: color,
-        size: 40,
+        child: const Icon(Icons.search),
       ),
     );
   }
