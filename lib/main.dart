@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
@@ -41,6 +42,33 @@ class _MapsPageState extends State<MapsPage> {
   List<dynamic> _destinationSuggestions = [];
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
+
+  bool _showAccidentHeatmap = false;
+  List<LatLng> _accidentPoints = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccidentData();
+  }
+
+  Future<void> _loadAccidentData() async {
+    try {
+      final String jsonString =
+          await rootBundle.loadString('assets/risk_areas.json');
+      final List<dynamic> data = json.decode(jsonString);
+
+      setState(() {
+        _accidentPoints = data
+            .map((accident) => LatLng(
+                double.parse(accident["Latitude"].toString()),
+                double.parse(accident["Longitude"].toString())))
+            .toList();
+      });
+    } catch (e) {
+      print("Error loading accident data: $e");
+    }
+  }
 
   // Initial center set to Manhattan, New York
   final LatLng _manhattanCenter = const LatLng(40.7831, -73.9712);
@@ -169,6 +197,10 @@ class _MapsPageState extends State<MapsPage> {
                 case 'traffic':
                   _showTraffic = !_showTraffic;
                   break;
+                case 'accidents':
+                  _showAccidentHeatmap = !_showAccidentHeatmap;
+                  break;
+
                 // Add more cases for future options
               }
             });
@@ -179,9 +211,10 @@ class _MapsPageState extends State<MapsPage> {
               checked: _showTraffic,
               child: const Text('Show Traffic'),
             ),
-            const PopupMenuItem<String>(
+            CheckedPopupMenuItem<String>(
               value: 'accidents',
-              child: Text('Accidents (Coming Soon)'),
+              checked: _showAccidentHeatmap,
+              child: const Text('Show Accidents'),
             ),
             const PopupMenuItem<String>(
               value: 'construction',
@@ -386,6 +419,18 @@ class _MapsPageState extends State<MapsPage> {
                       urlTemplate: _getMapUrl(),
                       subdomains: const ['a', 'b', 'c'],
                     ),
+                    if (_showAccidentHeatmap)
+                      CircleLayer(
+                        circles: _accidentPoints
+                            .map((point) => CircleMarker(
+                                  point: point,
+                                  color: Color.fromRGBO(
+                                      255, 0, 0, 0.5), // Red with 50% opacity
+
+                                  radius: 5,
+                                ))
+                            .toList(),
+                      ),
                     PolylineLayer(
                       polylines: [
                         Polyline(
