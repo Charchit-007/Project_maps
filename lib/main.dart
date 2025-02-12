@@ -38,6 +38,8 @@ class _MapsPageState extends State<MapsPage> {
   Map<String, dynamic> _routeInfo = {};
   bool _showSidebar = false;
   Map<String, dynamic>? _selectedLocation;
+  String _streetName = ''; // Variable to store street name
+
 
   List<dynamic> _originSuggestions = [];
   List<dynamic> _destinationSuggestions = [];
@@ -62,7 +64,14 @@ class _MapsPageState extends State<MapsPage> {
           } else {
             _destinationSuggestions = data;
           }
+
+          if (data.isNotEmpty) {
+          final address = data[0]['address'] as Map<String, dynamic>;
+          final streetName = address['road']; // Extracting the street name
+          print('Street Name: $streetName'); // This will print the street name
+        }
         });
+
       }
     } catch (e) {
       // Silent failure for search suggestions
@@ -73,6 +82,14 @@ class _MapsPageState extends State<MapsPage> {
     setState(() {
       _selectedLocation = location;
       _showSidebar = true;
+
+      final address = _selectedLocation!['address'] as Map<String, dynamic>;
+      if (address['road'] != null) {
+        _streetName = address['road'];  // Store street name in variable
+      } else {
+        _streetName = 'Street name not available';
+      }
+      print(_streetName);
     });
   }
 
@@ -137,7 +154,7 @@ class _MapsPageState extends State<MapsPage> {
                     _buildDetailItem(
                         'Name', _selectedLocation!['display_name']),
                     if (address['road'] != null)
-                      _buildDetailItem('Street', address['road']),
+                      _buildDetailItem('Street', _streetName),
                     if (address['city'] != null)
                       _buildDetailItem('City', address['city']),
                     if (address['state'] != null)
