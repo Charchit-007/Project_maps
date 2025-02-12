@@ -28,6 +28,8 @@ class MapsPage extends StatefulWidget {
   State<MapsPage> createState() => _MapsPageState();
 }
 
+final TextEditingController _searchController = TextEditingController();
+
 class _MapsPageState extends State<MapsPage> {
   LatLng? _origin;
   LatLng? _destination;
@@ -37,6 +39,8 @@ class _MapsPageState extends State<MapsPage> {
   Map<String, dynamic> _routeInfo = {};
   bool _showSidebar = false;
   Map<String, dynamic>? _selectedLocation;
+  String _streetName = ''; // Variable to store street name
+
 
   List<dynamic> _originSuggestions = [];
   List<dynamic> _destinationSuggestions = [];
@@ -88,7 +92,14 @@ class _MapsPageState extends State<MapsPage> {
           } else {
             _destinationSuggestions = data;
           }
+
+          if (data.isNotEmpty) {
+          final address = data[0]['address'] as Map<String, dynamic>;
+          final streetName = address['road']; // Extracting the street name
+          print('Street Name: $streetName'); // This will print the street name
+        }
         });
+
       }
     } catch (e) {
       // Silent failure for search suggestions
@@ -99,7 +110,38 @@ class _MapsPageState extends State<MapsPage> {
     setState(() {
       _selectedLocation = location;
       _showSidebar = true;
+
+      final address = _selectedLocation!['address'] as Map<String, dynamic>;
+      if (address['road'] != null) {
+        _streetName = address['road'];  // Store street name in variable
+      } else {
+        _streetName = 'Street name not available';
+      }
+      print(_streetName);
     });
+  }
+
+  Widget _buildSearchBar() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search places...',
+          prefixIcon: const Icon(Icons.search, color: Colors.blue),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        onChanged: (value) async {
+          //final results = await _searchLocation(value, false);
+          //setState(() => _searchResults = results);
+        },
+      ),
+    );
   }
 
   Widget _buildSidebar() {
@@ -140,7 +182,7 @@ class _MapsPageState extends State<MapsPage> {
                     _buildDetailItem(
                         'Name', _selectedLocation!['display_name']),
                     if (address['road'] != null)
-                      _buildDetailItem('Street', address['road']),
+                      _buildDetailItem('Street', _streetName),
                     if (address['city'] != null)
                       _buildDetailItem('City', address['city']),
                     if (address['state'] != null)
@@ -369,6 +411,7 @@ class _MapsPageState extends State<MapsPage> {
       ),
       body: Column(
         children: [
+          _buildSearchBar(),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
