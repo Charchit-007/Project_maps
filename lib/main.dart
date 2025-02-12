@@ -32,14 +32,23 @@ class _MapsPageState extends State<MapsPage> {
   LatLng? _destination;
   List<LatLng> _routePoints = [];
   bool _isLoading = false;
+  bool _showTraffic = false;
+  Map<String, dynamic> _routeInfo = {};
+  bool _showSidebar = false;
+  Map<String, dynamic>? _selectedLocation;
+
   List<dynamic> _originSuggestions = [];
   List<dynamic> _destinationSuggestions = [];
-  TextEditingController _originController = TextEditingController();
-  TextEditingController _destinationController = TextEditingController();
+  final TextEditingController _originController = TextEditingController();
+  final TextEditingController _destinationController = TextEditingController();
+
+  // Initial center set to Manhattan, New York
+  final LatLng _manhattanCenter = const LatLng(40.7831, -73.9712);
 
   Future<void> _searchLocation(String query, bool isOrigin) async {
     if (query.isEmpty) return;
-    try { 
+
+    try {
       final response = await http.get(Uri.parse(
           'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5'));
 
@@ -54,17 +63,141 @@ class _MapsPageState extends State<MapsPage> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error fetching suggestions: $e')),
-        // i dont think we should keep this, as every character we input, if api ko kuch nhi milta for some time; then snackbar display karta hai baar baar
-      );
+      // Silent failure for search suggestions
     }
+  }
+
+  void _showLocationDetails(Map<String, dynamic> location) {
+    setState(() {
+      _selectedLocation = location;
+      _showSidebar = true;
+    });
+  }
+
+  Widget _buildSidebar() {
+    if (!_showSidebar || _selectedLocation == null)
+      return const SizedBox.shrink();
+
+    final address = _selectedLocation!['address'] as Map<String, dynamic>;
+
+    return Positioned(
+      left: 0,
+      top: 0,
+      bottom: 0,
+      child: Card(
+        margin: const EdgeInsets.all(8),
+        child: Container(
+          width: 300,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Location Details',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => setState(() => _showSidebar = false),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Expanded(
+                child: ListView(
+                  children: [
+                    _buildDetailItem(
+                        'Name', _selectedLocation!['display_name']),
+                    if (address['road'] != null)
+                      _buildDetailItem('Street', address['road']),
+                    if (address['city'] != null)
+                      _buildDetailItem('City', address['city']),
+                    if (address['state'] != null)
+                      _buildDetailItem('State', address['state']),
+                    if (address['postcode'] != null)
+                      _buildDetailItem('Postal Code', address['postcode']),
+                    if (address['country'] != null)
+                      _buildDetailItem('Country', address['country']),
+                    _buildDetailItem('Coordinates',
+                        '${_selectedLocation!['lat']}, ${_selectedLocation!['lon']}'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMapOptionsMenu() {
+    return Positioned(
+      right: 16,
+      top: 16,
+      child: Card(
+        child: PopupMenuButton<String>(
+          icon: const Icon(Icons.layers),
+          onSelected: (String value) {
+            setState(() {
+              switch (value) {
+                case 'traffic':
+                  _showTraffic = !_showTraffic;
+                  break;
+                // Add more cases for future options
+              }
+            });
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            CheckedPopupMenuItem<String>(
+              value: 'traffic',
+              checked: _showTraffic,
+              child: const Text('Show Traffic'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'accidents',
+              child: Text('Accidents (Coming Soon)'),
+            ),
+            const PopupMenuItem<String>(
+              value: 'construction',
+              child: Text('Construction (Coming Soon)'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _loadRoute() async {
     if (_origin == null || _destination == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter both origin and destination')),
+        const SnackBar(
+            content: Text('Please enter both origin and destination')),
       );
       return;
     }
@@ -89,6 +222,11 @@ class _MapsPageState extends State<MapsPage> {
           _routePoints = coordinates
               .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
               .toList();
+
+          _routeInfo = {
+            'distance': route['distance'],
+            'duration': route['duration'],
+          };
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -104,34 +242,89 @@ class _MapsPageState extends State<MapsPage> {
     }
   }
 
+  String _getMapUrl() {
+    if (_showTraffic) {
+      return 'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=4fe4cdb808254e38adb6efd7ed6f807e';
+    }
+    return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  }
+
+  Widget _buildRouteInfo() {
+    if (_routeInfo.isEmpty) return const SizedBox.shrink();
+
+    final distance = (_routeInfo['distance'] / 1000).toStringAsFixed(2);
+    final duration = (_routeInfo['duration'] / 60).toStringAsFixed(0);
+
+    return Positioned(
+      bottom: 16,
+      left: 16,
+      right: 16,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.directions_car),
+                  Text('$distance km'),
+                ],
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.access_time),
+                  Text('$duration mins'),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSuggestions(bool isOrigin) {
     final suggestions = isOrigin ? _originSuggestions : _destinationSuggestions;
-    return ListView.builder(    //creates a dynamic list of location suggestions
-      shrinkWrap: true,
-      itemCount: suggestions.length,
-      itemBuilder: (context, index) {
-        final suggestion = suggestions[index];
-        final displayName = suggestion['display_name'];
-        final lat = double.parse(suggestion['lat']);
-        final lon = double.parse(suggestion['lon']);
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 200),
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 8),
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: suggestions.length,
+          itemBuilder: (context, index) {
+            final suggestion = suggestions[index];
+            final displayName = suggestion['display_name'];
+            final lat = double.parse(suggestion['lat']);
+            final lon = double.parse(suggestion['lon']);
 
-        return ListTile(
-          title: Text(displayName),
-          onTap: () {
-            setState(() {
-              if (isOrigin) {
-                _origin = LatLng(lat, lon);
-                _originController.text = displayName;
-                _originSuggestions.clear();
-              } else {
-                _destination = LatLng(lat, lon);
-                _destinationController.text = displayName;
-                _destinationSuggestions.clear();
-              }
-            });
+            return ListTile(
+              title: Text(
+                displayName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () {
+                setState(() {
+                  if (isOrigin) {
+                    _origin = LatLng(lat, lon);
+                    _originController.text = displayName;
+                    _originSuggestions.clear();
+                  } else {
+                    _destination = LatLng(lat, lon);
+                    _destinationController.text = displayName;
+                    _destinationSuggestions.clear();
+                  }
+                });
+                _showLocationDetails(suggestion);
+              },
+            );
           },
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -152,10 +345,12 @@ class _MapsPageState extends State<MapsPage> {
                   onChanged: (value) => _searchLocation(value, true),
                   decoration: InputDecoration(
                     hintText: "Enter Origin",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    prefixIcon: const Icon(Icons.location_on),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
-                _buildSuggestions(true),
+                if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
               ],
             ),
           ),
@@ -164,15 +359,17 @@ class _MapsPageState extends State<MapsPage> {
             child: Column(
               children: [
                 TextField(
-                  // controller - controls the text inside the TextField
                   controller: _destinationController,
                   onChanged: (value) => _searchLocation(value, false),
                   decoration: InputDecoration(
                     hintText: "Enter Destination",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    prefixIcon: const Icon(Icons.location_pin),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
-                _buildSuggestions(false),
+                if (_destinationSuggestions.isNotEmpty)
+                  _buildSuggestions(false),
               ],
             ),
           ),
@@ -181,12 +378,12 @@ class _MapsPageState extends State<MapsPage> {
               children: [
                 FlutterMap(
                   options: MapOptions(
-                    initialCenter: _origin ?? LatLng(28.7041, 77.1025),   // center and zoom and deprecated so i replaced
-                    initialZoom: 11.0,
+                    initialCenter: _manhattanCenter,
+                    initialZoom: 12.0,
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate: _getMapUrl(),
                       subdomains: const ['a', 'b', 'c'],
                     ),
                     PolylineLayer(
@@ -203,8 +400,6 @@ class _MapsPageState extends State<MapsPage> {
                         if (_origin != null)
                           Marker(
                             point: _origin!,
-                            width: 60,
-                            height: 60,
                             child: const Icon(
                               Icons.location_on,
                               color: Colors.red,
@@ -214,8 +409,6 @@ class _MapsPageState extends State<MapsPage> {
                         if (_destination != null)
                           Marker(
                             point: _destination!,
-                            width: 60,
-                            height: 60,
                             child: const Icon(
                               Icons.location_pin,
                               color: Colors.green,
@@ -226,6 +419,9 @@ class _MapsPageState extends State<MapsPage> {
                     ),
                   ],
                 ),
+                _buildMapOptionsMenu(),
+                _buildSidebar(),
+                _buildRouteInfo(),
                 if (_isLoading)
                   const Center(
                     child: CircularProgressIndicator(),
@@ -237,7 +433,7 @@ class _MapsPageState extends State<MapsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _loadRoute,
-        child: const Icon(Icons.search),
+        child: const Icon(Icons.directions),
       ),
     );
   }
