@@ -27,6 +27,8 @@ class MapsPage extends StatefulWidget {
   State<MapsPage> createState() => _MapsPageState();
 }
 
+final TextEditingController _searchController = TextEditingController();
+
 class _MapsPageState extends State<MapsPage> {
   LatLng? _origin;
   LatLng? _destination;
@@ -72,6 +74,29 @@ class _MapsPageState extends State<MapsPage> {
       _selectedLocation = location;
       _showSidebar = true;
     });
+  }
+
+  Widget _buildSearchBar() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search places...',
+          prefixIcon: const Icon(Icons.search, color: Colors.blue),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        onChanged: (value) async {
+          //final results = await _searchLocation(value, false);
+          //setState(() => _searchResults = results);
+        },
+      ),
+    );
   }
 
   Widget _buildSidebar() {
@@ -336,6 +361,7 @@ class _MapsPageState extends State<MapsPage> {
       ),
       body: Column(
         children: [
+          _buildSearchBar(),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
