@@ -65,6 +65,7 @@ flutter:
   assets:
     - assets/risk_areas.json
     - assets/heatmap_data.json
+    - assets/accident_zones.geojson
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

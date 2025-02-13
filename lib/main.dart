@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_heatmap/flutter_map_heatmap.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -29,6 +27,8 @@ class MapsPage extends StatefulWidget {
   State<MapsPage> createState() => _MapsPageState();
 }
 
+final TextEditingController _searchController = TextEditingController();
+
 class _MapsPageState extends State<MapsPage> {
   LatLng? _origin;
   LatLng? _destination;
@@ -38,41 +38,13 @@ class _MapsPageState extends State<MapsPage> {
   Map<String, dynamic> _routeInfo = {};
   bool _showSidebar = false;
   Map<String, dynamic>? _selectedLocation;
+  String _streetName = ''; // Variable to store street name
+
 
   List<dynamic> _originSuggestions = [];
   List<dynamic> _destinationSuggestions = [];
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
-
-  bool _showAccidentHeatmap = false;
-  List<LatLng> _accidentPoints = [];
-
-  List<WeightedLatLng> _heatmapData = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAccidentData();
-  }
-
-  Future<void> _loadAccidentData() async {
-    try {
-      final String jsonString =
-          await rootBundle.loadString('assets/heatmap_data.json');
-      final List<dynamic> data = json.decode(jsonString);
-
-      setState(() {
-        _heatmapData = data
-            .map((accident) => WeightedLatLng(
-                LatLng(double.parse(accident["Latitude"].toString()),
-                    double.parse(accident["Longitude"].toString())),
-                1.0))
-            .toList();
-      });
-    } catch (e) {
-      print("Error loading accident data: $e");
-    }
-  }
 
   // Initial center set to Manhattan, New York
   final LatLng _manhattanCenter = const LatLng(40.7831, -73.9712);
@@ -92,7 +64,14 @@ class _MapsPageState extends State<MapsPage> {
           } else {
             _destinationSuggestions = data;
           }
+
+          if (data.isNotEmpty) {
+          final address = data[0]['address'] as Map<String, dynamic>;
+          final streetName = address['road']; // Extracting the street name
+          print('Street Name: $streetName'); // This will print the street name
+        }
         });
+
       }
     } catch (e) {
       // Silent failure for search suggestions
@@ -103,7 +82,38 @@ class _MapsPageState extends State<MapsPage> {
     setState(() {
       _selectedLocation = location;
       _showSidebar = true;
+
+      final address = _selectedLocation!['address'] as Map<String, dynamic>;
+      if (address['road'] != null) {
+        _streetName = address['road'];  // Store street name in variable
+      } else {
+        _streetName = 'Street name not available';
+      }
+      print(_streetName);
     });
+  }
+
+  Widget _buildSearchBar() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search places...',
+          prefixIcon: const Icon(Icons.search, color: Colors.blue),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+        onChanged: (value) async {
+          //final results = await _searchLocation(value, false);
+          //setState(() => _searchResults = results);
+        },
+      ),
+    );
   }
 
   Widget _buildSidebar() {
@@ -144,7 +154,7 @@ class _MapsPageState extends State<MapsPage> {
                     _buildDetailItem(
                         'Name', _selectedLocation!['display_name']),
                     if (address['road'] != null)
-                      _buildDetailItem('Street', address['road']),
+                      _buildDetailItem('Street', _streetName),
                     if (address['city'] != null)
                       _buildDetailItem('City', address['city']),
                     if (address['state'] != null)
@@ -201,10 +211,6 @@ class _MapsPageState extends State<MapsPage> {
                 case 'traffic':
                   _showTraffic = !_showTraffic;
                   break;
-                case 'accidents':
-                  _showAccidentHeatmap = !_showAccidentHeatmap;
-                  break;
-
                 // Add more cases for future options
               }
             });
@@ -215,10 +221,9 @@ class _MapsPageState extends State<MapsPage> {
               checked: _showTraffic,
               child: const Text('Show Traffic'),
             ),
-            CheckedPopupMenuItem<String>(
+            const PopupMenuItem<String>(
               value: 'accidents',
-              checked: _showAccidentHeatmap,
-              child: const Text('Show Accidents'),
+              child: Text('Accidents (Coming Soon)'),
             ),
             const PopupMenuItem<String>(
               value: 'construction',
@@ -373,6 +378,7 @@ class _MapsPageState extends State<MapsPage> {
       ),
       body: Column(
         children: [
+          _buildSearchBar(),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Column(
@@ -423,23 +429,6 @@ class _MapsPageState extends State<MapsPage> {
                       urlTemplate: _getMapUrl(),
                       subdomains: const ['a', 'b', 'c'],
                     ),
-                    if (_showAccidentHeatmap)
-                      HeatMapLayer(
-                        heatMapDataSource:
-                            InMemoryHeatMapDataSource(data: _heatmapData),
-                        heatMapOptions: HeatMapOptions(
-                          radius: 20.0,
-                          blurFactor: 10.0,
-                          gradient: {
-                            0.2: Colors.blue,
-                            0.4: Colors.green,
-                            0.6: Colors.yellow,
-                            0.8: Colors.orange,
-                            1.0: Colors.red,
-                          },
-                          minOpacity: 0.1,
-                        ),
-                      ),
                     PolylineLayer(
                       polylines: [
                         Polyline(
