@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'input.dart';
 
 void main() {
   runApp(const OpenStreetMapRouteApp());
@@ -38,8 +39,11 @@ class _MapsPageState extends State<MapsPage> {
   Map<String, dynamic> _routeInfo = {};
   bool _showSidebar = false;
   Map<String, dynamic>? _selectedLocation;
-  String _streetName = ''; // Variable to store street name
 
+  Map<String, dynamic>? _selectedOriginLocation;
+  Map<String, dynamic>? _selectedDestinationLocation;
+  String _originStreetName = '';
+  String _destinationStreetName = '';
 
   List<dynamic> _originSuggestions = [];
   List<dynamic> _destinationSuggestions = [];
@@ -66,32 +70,85 @@ class _MapsPageState extends State<MapsPage> {
           }
 
           if (data.isNotEmpty) {
-          final address = data[0]['address'] as Map<String, dynamic>;
-          final streetName = address['road']; // Extracting the street name
-          print('Street Name: $streetName'); // This will print the street name
-        }
+            final address = data[0]['address'] as Map<String, dynamic>;
+            final streetName = address['road']; // Extracting the street name
+            print(
+                'Street Name: $streetName'); // This will print the street name
+          }
         });
-
       }
     } catch (e) {
       // Silent failure for search suggestions
     }
   }
 
-  void _showLocationDetails(Map<String, dynamic> location) {
+  void _showOriginLocationDetails(Map<String, dynamic> location) {
     setState(() {
-      _selectedLocation = location;
+      _selectedOriginLocation = location;
       _showSidebar = true;
 
-      final address = _selectedLocation!['address'] as Map<String, dynamic>;
+      final address = location['address'] as Map<String, dynamic>;
       if (address['road'] != null) {
-        _streetName = address['road'];  // Store street name in variable
+        _originStreetName = address['road'];
       } else {
-        _streetName = 'Street name not available';
+        _originStreetName = 'Street name not available';
       }
-      print(_streetName);
     });
   }
+
+  void _showLocationDetails(Map<String, dynamic> location, bool isOrigin) {
+    if (isOrigin) {
+      setState(() {
+        _selectedOriginLocation = location;
+        _showSidebar = true;
+
+        final address = location['address'] as Map<String, dynamic>;
+        if (address['road'] != null) {
+          _originStreetName = address['road'];
+        } else {
+          _originStreetName = 'Street name not available';
+        }
+      });
+    } else {
+      setState(() {
+        _selectedDestinationLocation = location;
+        _showSidebar = true;
+
+        final address = location['address'] as Map<String, dynamic>;
+        if (address['road'] != null) {
+          _destinationStreetName = address['road'];
+        } else {
+          _destinationStreetName = 'Street name not available';
+        }
+      });
+    }
+  }
+
+  void _showDestinationLocationDetails(Map<String, dynamic> location) {
+    setState(() {
+      _selectedDestinationLocation = location;
+      _showSidebar = true;
+
+      final address = location['address'] as Map<String, dynamic>;
+      if (address['road'] != null) {
+        _destinationStreetName = address['road'];
+      } else {
+        _destinationStreetName = 'Street name not available';
+      }
+    });
+  }
+
+  // void _showLocationDetails(Map<String, dynamic> location) {
+  //   setState(() {
+  //     _selectedLocation = location;
+  //     _showSidebar = true;
+
+  //     final address = _selectedLocation!['address'] as Map<String, dynamic>;
+  //     if (address['road'] != null) {
+  //     } else {
+  //     }
+  //   });
+  // }
 
   Widget _buildSearchBar() {
     return Card(
@@ -116,11 +173,73 @@ class _MapsPageState extends State<MapsPage> {
     );
   }
 
-  Widget _buildSidebar() {
-    if (!_showSidebar || _selectedLocation == null)
-      return const SizedBox.shrink();
+  Widget _buildLocationPanel(String title, Map<String, dynamic>? location,
+      String streetName, BuildContext context) {
+    if (location == null) return const SizedBox.shrink();
 
-    final address = _selectedLocation!['address'] as Map<String, dynamic>;
+    final address = location['address'] as Map<String, dynamic>;
+
+    return Container(
+      height: 190,
+      width: 250, // Half the width of the original sidebar
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        TrafficAnalysisApp(location: location),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 142, 255, 141),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    bottomRight: Radius.circular(20),
+                  ), // Rounded corners
+                ),
+              ),
+              child: Icon(Icons.analytics_outlined),
+            ),
+          ]),
+          const Divider(),
+          Expanded(
+            child: ListView(
+              children: [
+                _buildDetailItem('Name', location['display_name']),
+                if (streetName.isNotEmpty)
+                  _buildDetailItem('Street', streetName),
+                if (address['city'] != null)
+                  _buildDetailItem('City', address['city']),
+                if (address['state'] != null)
+                  _buildDetailItem('State', address['state']),
+                if (address['postcode'] != null)
+                  _buildDetailItem('Postal Code', address['postcode']),
+                _buildDetailItem(
+                    'Coordinates', '${location['lat']}, ${location['lon']}'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSidebar() {
+    final bool hasAnyLocation =
+        _selectedOriginLocation != null || _selectedDestinationLocation != null;
+
+    if (!_showSidebar || !hasAnyLocation) return const SizedBox.shrink();
 
     return Positioned(
       left: 0,
@@ -129,8 +248,9 @@ class _MapsPageState extends State<MapsPage> {
       child: Card(
         margin: const EdgeInsets.all(8),
         child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(16),
+          height: 500,
+          width: 320, // Slightly wider to accommodate both panels
+          padding: const EdgeInsets.all(8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -149,22 +269,17 @@ class _MapsPageState extends State<MapsPage> {
               ),
               const Divider(),
               Expanded(
-                child: ListView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    _buildDetailItem(
-                        'Name', _selectedLocation!['display_name']),
-                    if (address['road'] != null)
-                      _buildDetailItem('Street', _streetName),
-                    if (address['city'] != null)
-                      _buildDetailItem('City', address['city']),
-                    if (address['state'] != null)
-                      _buildDetailItem('State', address['state']),
-                    if (address['postcode'] != null)
-                      _buildDetailItem('Postal Code', address['postcode']),
-                    if (address['country'] != null)
-                      _buildDetailItem('Country', address['country']),
-                    _buildDetailItem('Coordinates',
-                        '${_selectedLocation!['lat']}, ${_selectedLocation!['lon']}'),
+                    _buildLocationPanel('Origin', _selectedOriginLocation,
+                        _originStreetName, context),
+                    const Divider(),
+                    _buildLocationPanel(
+                        'Destination',
+                        _selectedDestinationLocation,
+                        _destinationStreetName,
+                        context),
                   ],
                 ),
               ),
@@ -355,13 +470,15 @@ class _MapsPageState extends State<MapsPage> {
                     _origin = LatLng(lat, lon);
                     _originController.text = displayName;
                     _originSuggestions.clear();
+                    // _showOriginLocationDetails(suggestion);
                   } else {
                     _destination = LatLng(lat, lon);
                     _destinationController.text = displayName;
                     _destinationSuggestions.clear();
+                    // _showDestinationLocationDetails(suggestion);
                   }
                 });
-                _showLocationDetails(suggestion);
+                _showLocationDetails(suggestion, isOrigin);
               },
             );
           },
@@ -376,104 +493,106 @@ class _MapsPageState extends State<MapsPage> {
       appBar: AppBar(
         title: const Text("Route Map"),
       ),
-      body: Column(
-        children: [
-          _buildSearchBar(),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _originController,
-                  onChanged: (value) => _searchLocation(value, true),
-                  decoration: InputDecoration(
-                    hintText: "Enter Origin",
-                    prefixIcon: const Icon(Icons.location_on),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-                if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              children: [
-                TextField(
-                  controller: _destinationController,
-                  onChanged: (value) => _searchLocation(value, false),
-                  decoration: InputDecoration(
-                    hintText: "Enter Destination",
-                    prefixIcon: const Icon(Icons.location_pin),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-                if (_destinationSuggestions.isNotEmpty)
-                  _buildSuggestions(false),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Stack(
-              children: [
-                FlutterMap(
-                  options: MapOptions(
-                    initialCenter: _manhattanCenter,
-                    initialZoom: 12.0,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: _getMapUrl(),
-                      subdomains: const ['a', 'b', 'c'],
+      body: Stack(children: [
+        Column(
+          children: [
+            _buildSearchBar(),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _originController,
+                    onChanged: (value) => _searchLocation(value, true),
+                    decoration: InputDecoration(
+                      hintText: "Enter Origin",
+                      prefixIcon: const Icon(Icons.location_on),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    PolylineLayer(
-                      polylines: [
-                        Polyline(
-                          points: _routePoints,
-                          strokeWidth: 4.0,
-                          color: Colors.blue,
-                        ),
-                      ],
+                  ),
+                  if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _destinationController,
+                    onChanged: (value) => _searchLocation(value, false),
+                    decoration: InputDecoration(
+                      hintText: "Enter Destination",
+                      prefixIcon: const Icon(Icons.location_pin),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
                     ),
-                    MarkerLayer(
-                      markers: [
-                        if (_origin != null)
-                          Marker(
-                            point: _origin!,
-                            child: const Icon(
-                              Icons.location_on,
-                              color: Colors.red,
-                              size: 40,
-                            ),
+                  ),
+                  if (_destinationSuggestions.isNotEmpty)
+                    _buildSuggestions(false),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    options: MapOptions(
+                      initialCenter: _manhattanCenter,
+                      initialZoom: 12.0,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: _getMapUrl(),
+                        subdomains: const ['a', 'b', 'c'],
+                      ),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: _routePoints,
+                            strokeWidth: 4.0,
+                            color: Colors.blue,
                           ),
-                        if (_destination != null)
-                          Marker(
-                            point: _destination!,
-                            child: const Icon(
-                              Icons.location_pin,
-                              color: Colors.green,
-                              size: 40,
+                        ],
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          if (_origin != null)
+                            Marker(
+                              point: _origin!,
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Colors.red,
+                                size: 40,
+                              ),
                             ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-                _buildMapOptionsMenu(),
-                _buildSidebar(),
-                _buildRouteInfo(),
-                if (_isLoading)
-                  const Center(
-                    child: CircularProgressIndicator(),
+                          if (_destination != null)
+                            Marker(
+                              point: _destination!,
+                              child: const Icon(
+                                Icons.location_pin,
+                                color: Colors.green,
+                                size: 40,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
-              ],
+                  _buildMapOptionsMenu(),
+                  _buildSidebar(),
+                  _buildRouteInfo(),
+                  if (_isLoading)
+                    const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ]),
       floatingActionButton: FloatingActionButton(
         onPressed: _loadRoute,
         child: const Icon(Icons.directions),
