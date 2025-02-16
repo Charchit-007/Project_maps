@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Volume data
-df = pd.read_csv("C:/Traffic_Data_DM/traffic_project_data/Automated_Traffic_Volume_Counts_20250127.csv")
+df = pd.read_csv("D:\chrome downloads\Automated_Traffic_Volume_Counts.csv")
 df['Yr'] = df['Yr'].astype(str)
 df['M'] = df['M'].astype(str)
 df['D'] = df['D'].astype(str)
@@ -26,7 +26,7 @@ df['D'] = df['D'].astype(str)
 df['date'] = df[['Yr', 'M', 'D']].agg('-'.join, axis=1)
 
 # Accident data
-df_acc = pd.read_csv("C:/Traffic_Data_DM/traffic_project_data/NYC_Collisions/NYC_Collisions.csv")
+df_acc = pd.read_csv("D:\chrome downloads\NYC_Collisions.csv")
 df_acc['Hour'] = pd.to_datetime(df_acc['Time'], format='%H:%M:%S').dt.hour  # Hour column
 
 # Speeds dataset
