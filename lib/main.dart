@@ -53,6 +53,9 @@ class _MapsPageState extends State<MapsPage> {
   // Initial center set to Manhattan, New York
   final LatLng _manhattanCenter = const LatLng(40.7831, -73.9712);
 
+  bool _showRouteSearch =
+      false; // New state variable to track which search to show
+
   Future<void> _searchLocation(String query, bool isOrigin) async {
     if (query.isEmpty) return;
 
@@ -82,19 +85,6 @@ class _MapsPageState extends State<MapsPage> {
     }
   }
 
-  void _showOriginLocationDetails(Map<String, dynamic> location) {
-    setState(() {
-      _selectedOriginLocation = location;
-      _showSidebar = true;
-
-      final address = location['address'] as Map<String, dynamic>;
-      if (address['road'] != null) {
-        _originStreetName = address['road'];
-      } else {
-        _originStreetName = 'Street name not available';
-      }
-    });
-  }
 
   void _showLocationDetails(Map<String, dynamic> location, bool isOrigin) {
     if (isOrigin) {
@@ -124,19 +114,32 @@ class _MapsPageState extends State<MapsPage> {
     }
   }
 
-  void _showDestinationLocationDetails(Map<String, dynamic> location) {
-    setState(() {
-      _selectedDestinationLocation = location;
-      _showSidebar = true;
+  // void _showOriginLocationDetails(Map<String, dynamic> location) {
+  //   setState(() {
+  //     _selectedOriginLocation = location;
+  //     _showSidebar = true;
 
-      final address = location['address'] as Map<String, dynamic>;
-      if (address['road'] != null) {
-        _destinationStreetName = address['road'];
-      } else {
-        _destinationStreetName = 'Street name not available';
-      }
-    });
-  }
+  //     final address = location['address'] as Map<String, dynamic>;
+  //     if (address['road'] != null) {
+  //       _originStreetName = address['road'];
+  //     } else {
+  //       _originStreetName = 'Street name not available';
+  //     }
+  //   });
+  // }
+  // void _showDestinationLocationDetails(Map<String, dynamic> location) {
+  //   setState(() {
+  //     _selectedDestinationLocation = location;
+  //     _showSidebar = true;
+
+  //     final address = location['address'] as Map<String, dynamic>;
+  //     if (address['road'] != null) {
+  //       _destinationStreetName = address['road'];
+  //     } else {
+  //       _destinationStreetName = 'Street name not available';
+  //     }
+  //   });
+  // }
 
   // void _showLocationDetails(Map<String, dynamic> location) {
   //   setState(() {
@@ -150,27 +153,24 @@ class _MapsPageState extends State<MapsPage> {
   //   });
   // }
 
+  
+
   Widget _buildSearchBar() {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Search places...',
-          prefixIcon: const Icon(Icons.search, color: Colors.blue),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(children: [
+          TextField(
+            controller: _originController,
+            onChanged: (value) => _searchLocation(value, true),
+            decoration: InputDecoration(
+              hintText: "Explore",
+              prefixIcon: const Icon(Icons.location_on),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+            ),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        onChanged: (value) async {
-          //final results = await _searchLocation(value, false);
-          //setState(() => _searchResults = results);
-        },
-      ),
-    );
+          if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
+        ]));
   }
 
   Widget _buildLocationPanel(String title, Map<String, dynamic>? location,
@@ -180,7 +180,7 @@ class _MapsPageState extends State<MapsPage> {
     final address = location['address'] as Map<String, dynamic>;
 
     return Container(
-      height: 190,
+      height: 170,
       width: 250, // Half the width of the original sidebar
       padding: const EdgeInsets.all(8),
       child: Column(
@@ -241,51 +241,61 @@ class _MapsPageState extends State<MapsPage> {
 
     if (!_showSidebar || !hasAnyLocation) return const SizedBox.shrink();
 
-    return Positioned(
-      left: 0,
-      top: 0,
-      bottom: 0,
-      child: Card(
-        margin: const EdgeInsets.all(8),
-        child: Container(
-          height: 500,
-          width: 320, // Slightly wider to accommodate both panels
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: 400),
+      child: Positioned(
+        left: 0,
+        top: 0,
+        bottom: 0,
+        child: Card(
+            margin: const EdgeInsets.all(8),
+            child: IntrinsicHeight( // Ensures height fits the content
+          child: Container(
+              width: 320, // Slightly wider to accommodate both panels
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Location Details',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Location Details',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => setState(() => _showSidebar = false),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => setState(() => _showSidebar = false),
+                  const Divider(),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        _buildLocationPanel('Origin', _selectedOriginLocation,
+                            _originStreetName, context),
+                        const Divider(),
+                        SizedBox(
+                            child: _showRouteSearch
+                                ? _buildLocationPanel(
+                                    // show only if route and destination search bar, if single search bar, dont show
+                                    'Destination',
+                                    _selectedDestinationLocation,
+                                    _destinationStreetName,
+                                    context)
+                                : null),
+                        const Divider(),
+                        SizedBox(
+                            child: _showRouteSearch ? _buildRouteInfo() : null),
+                      ],
+                    ),
                   ),
                 ],
               ),
-              const Divider(),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    _buildLocationPanel('Origin', _selectedOriginLocation,
-                        _originStreetName, context),
-                    const Divider(),
-                    _buildLocationPanel(
-                        'Destination',
-                        _selectedDestinationLocation,
-                        _destinationStreetName,
-                        context),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+            ))),
       ),
     );
   }
@@ -487,6 +497,86 @@ class _MapsPageState extends State<MapsPage> {
     );
   }
 
+  Widget _buildToggleableSearch() {
+    if (_showRouteSearch) {
+      // Show route search (origin and destination)
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: [
+                      TextField(
+                        controller: _originController,
+                        onChanged: (value) => _searchLocation(value, true),
+                        decoration: InputDecoration(
+                          hintText: "Enter Origin",
+                          prefixIcon: const Icon(Icons.location_on),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                      if (_originSuggestions.isNotEmpty)
+                        _buildSuggestions(true),
+                    ],
+                  ),
+                ),
+              ),
+              // Button to toggle back to normal search
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _showRouteSearch = false;
+                  });
+                },
+              ),
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _destinationController,
+                  onChanged: (value) => _searchLocation(value, false),
+                  decoration: InputDecoration(
+                    hintText: "Enter Destination",
+                    prefixIcon: const Icon(Icons.location_pin),
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                if (_destinationSuggestions.isNotEmpty)
+                  _buildSuggestions(false),
+              ],
+            ),
+          ),
+        ],
+      );
+    } else {
+      // Show normal search bar with directions button
+      return Row(
+        children: [
+          Expanded(
+            child: _buildSearchBar(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.directions),
+            onPressed: () {
+              setState(() {
+                _showRouteSearch = true;
+              });
+            },
+          ),
+        ],
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -496,44 +586,7 @@ class _MapsPageState extends State<MapsPage> {
       body: Stack(children: [
         Column(
           children: [
-            _buildSearchBar(),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _originController,
-                    onChanged: (value) => _searchLocation(value, true),
-                    decoration: InputDecoration(
-                      hintText: "Enter Origin",
-                      prefixIcon: const Icon(Icons.location_on),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                  if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _destinationController,
-                    onChanged: (value) => _searchLocation(value, false),
-                    decoration: InputDecoration(
-                      hintText: "Enter Destination",
-                      prefixIcon: const Icon(Icons.location_pin),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                  if (_destinationSuggestions.isNotEmpty)
-                    _buildSuggestions(false),
-                ],
-              ),
-            ),
+            _buildToggleableSearch(),
             Expanded(
               child: Stack(
                 children: [
@@ -582,7 +635,7 @@ class _MapsPageState extends State<MapsPage> {
                   ),
                   _buildMapOptionsMenu(),
                   _buildSidebar(),
-                  _buildRouteInfo(),
+                  // _buildRouteInfo(),
                   if (_isLoading)
                     const Center(
                       child: CircularProgressIndicator(),
@@ -593,10 +646,12 @@ class _MapsPageState extends State<MapsPage> {
           ],
         ),
       ]),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadRoute,
-        child: const Icon(Icons.directions),
-      ),
+      floatingActionButton: _showRouteSearch
+          ? FloatingActionButton(
+              onPressed: _loadRoute,
+              child: const Icon(Icons.directions),
+            )
+          : null,
     );
   }
 }
