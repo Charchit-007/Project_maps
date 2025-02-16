@@ -136,7 +136,7 @@ def street_analysis():
         total_injuries = street_acc['Persons Injured'].sum()
         total_fatalities = street_acc['Persons Killed'].sum()
         if total_accidents > 0:
-            severity_ratio = ((total_injuries + total_fatalities) / total_accidents) * 100
+            severity_ratio = ((total_injuries + total_fatalities) / total_accidents)
         else:
             severity_ratio = 0
 
