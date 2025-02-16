@@ -18,7 +18,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Volume data
-df = pd.read_csv("D:\chrome downloads\Automated_Traffic_Volume_Counts.csv")
+df = pd.read_csv("C:/Traffic_Data_DM/traffic_project_data/Automated_Traffic_Volume_Counts_20250127.csv")
 df['Yr'] = df['Yr'].astype(str)
 df['M'] = df['M'].astype(str)
 df['D'] = df['D'].astype(str)
@@ -26,7 +26,7 @@ df['D'] = df['D'].astype(str)
 df['date'] = df[['Yr', 'M', 'D']].agg('-'.join, axis=1)
 
 # Accident data
-df_acc = pd.read_csv("D:\chrome downloads\NYC_Collisions.csv")
+df_acc = pd.read_csv("C:/Traffic_Data_DM/traffic_project_data/NYC_Collisions/NYC_Collisions.csv")
 df_acc['Hour'] = pd.to_datetime(df_acc['Time'], format='%H:%M:%S').dt.hour  # Hour column
 
 # Speeds dataset
@@ -73,7 +73,7 @@ def street_analysis():
         monthly_blockages = blocked.groupby('month').size()
 
         plt.figure(figsize=(10, 6))
-        monthly_blockages.plot(kind='line')
+        monthly_blockages.plot(kind='bar')
         plt.title(f"Monthly Blockage Patterns for {street}")
         plt.xlabel("Month")
         plt.ylabel("Number of Blockages")
@@ -136,7 +136,7 @@ def street_analysis():
         total_injuries = street_acc['Persons Injured'].sum()
         total_fatalities = street_acc['Persons Killed'].sum()
         if total_accidents > 0:
-            severity_ratio = (total_injuries + total_fatalities) / total_accidents
+            severity_ratio = ((total_injuries + total_fatalities) / total_accidents) * 100
         else:
             severity_ratio = 0
 
@@ -150,7 +150,7 @@ def street_analysis():
 
         # Plot accidents by hour
         plt.figure(figsize=(10, 5))
-        sns.lineplot(x=hourly_accidents['Hour'], y=hourly_accidents['Accident_Count'], palette=colors)
+        sns.barplot(x=hourly_accidents['Hour'], y=hourly_accidents['Accident_Count'], palette=colors)
         plt.xlabel("Hour of the Day")
         plt.ylabel("Number of Accidents")
         plt.title("Accidents by Hour of the Day")
@@ -209,6 +209,49 @@ def street_analysis():
         "severity_ratio": round(severity_ratio, 2),
         "accidents": accidents,
         }
+    
+        if not street_data.empty:
+            street_acc['Hour'] = pd.to_datetime(street_acc['Time'], format='%H:%M:%S').dt.hour  # Extract hour
+            hourly_accidents = street_acc.groupby(['Street Name', 'Hour']).size().reset_index(name='accident_count')
+
+            hourly_volume = street_data.groupby(['street', 'HH'])['Vol'].mean().reset_index()
+            # Convert street names to lowercase for consistency
+            hourly_volume['street'] = hourly_volume['street'].str.lower()
+            hourly_accidents['Street Name'] = hourly_accidents['Street Name'].str.lower()
+            merged_data = pd.merge(
+                hourly_volume,
+                hourly_accidents,
+                left_on=['street', 'HH'],
+                right_on=['Street Name', 'Hour'],
+                how='left'
+            )
+            merged_data = merged_data[merged_data['Street Name'].notna()]       #remove unmatched rows with NaN
+            corr = merged_data['Vol'].corr(merged_data['accident_count'])
+            
+            plt.figure(figsize=(8,6))
+            # Scatter plot with trend line
+            sns.regplot(x=merged_data['Vol'], y=merged_data['accident_count'], 
+                        scatter_kws={'s': 10, 'alpha': 0.5},  # Adjust dot size and transparency
+                        line_kws={'color': 'red'},  # Make the trend line red
+                        lowess=False)  # Use locally weighted regression for a smooth trend
+            plt.xlabel("Traffic Volume")
+            plt.ylabel("Accident Count")
+            plt.title("Traffic Volume vs Accident Count with Trend Line")
+            img = io.BytesIO()
+            plt.savefig(img, format='png')
+            img.seek(0)
+            corr_scatter = base64.b64encode(img.getvalue()).decode()
+            response['correlation'] = {
+                "corr":corr,
+                "corr_scatter":corr_scatter,
+            }
+
+        if not street_data.empty:
+            risk_analysis = peak_hour_func(street, street_data, street_acc)
+            response['risk_analysis'] = risk_analysis
+
+
+
 
     if not street_speed.empty:
     #     return jsonify({"error": "No Speed data found for this street"}), 404
@@ -275,9 +318,7 @@ def street_analysis():
         # trend_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
         # plt.close()
 
-        risk_analysis = peak_hour_func(street, street_data, street_acc)
-    
-        response['risk_analysis'] = risk_analysis
+
 
     return jsonify(response)
     #     
