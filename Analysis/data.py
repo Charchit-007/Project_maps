@@ -73,7 +73,7 @@ def street_analysis():
         monthly_blockages = blocked.groupby('month').size()
 
         plt.figure(figsize=(10, 6))
-        monthly_blockages.plot(kind='bar')
+        monthly_blockages.plot(kind='line')
         plt.title(f"Monthly Blockage Patterns for {street}")
         plt.xlabel("Month")
         plt.ylabel("Number of Blockages")
@@ -109,7 +109,7 @@ def street_analysis():
 
         # Traffic volume per hour plot
         plt.figure(figsize=(12, 6))
-        sns.barplot(data=street_data.groupby(by=['street','HH'])['Vol'].mean().reset_index(), x="HH", y="Vol")
+        sns.lineplot(data=street_data.groupby(by=['street','HH'])['Vol'].mean().reset_index(), x="HH", y="Vol")
         plt.xlabel("Hour of the Day")
         plt.ylabel("Average Traffic Volume")
         plt.title(f"Traffic Volume for {street}")
@@ -150,7 +150,7 @@ def street_analysis():
 
         # Plot accidents by hour
         plt.figure(figsize=(10, 5))
-        sns.barplot(x=hourly_accidents['Hour'], y=hourly_accidents['Accident_Count'], palette=colors)
+        sns.lineplot(x=hourly_accidents['Hour'], y=hourly_accidents['Accident_Count'], palette=colors)
         plt.xlabel("Hour of the Day")
         plt.ylabel("Number of Accidents")
         plt.title("Accidents by Hour of the Day")
