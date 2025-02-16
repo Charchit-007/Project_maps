@@ -174,6 +174,135 @@ class AnalysisResultWidget extends StatelessWidget {
         ));
   }
 
+  Widget _buildCorrelationAnalysis() {
+    if (data['correlation'] == null) {
+      return const SizedBox(
+        child: Text(
+          "No correlation data found.",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    final correlation = data['correlation'];
+    final corrValue = correlation['corr'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            "Volume-Accident Correlation Analysis",
+          ),
+        ),
+
+        // Correlation Card
+        Card(
+          elevation: 2,
+          margin: const EdgeInsets.all(16.0),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.analytics, color: Colors.blue),
+                    const SizedBox(width: 8),
+                    Text(
+                      "Correlation Coefficient",
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: Text(
+                    corrValue.toStringAsFixed(3),
+                    style: TextStyle(
+                      color: _getCorrelationColor(corrValue),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    _getCorrelationDescription(corrValue),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Scatter Plot
+        if (correlation['corr_scatter'] == null) ...[
+          // abhi ke liye nahi dikha raha graph
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Text(
+              "Volume vs Accident Distribution",
+            ),
+          ),
+          Card(
+            elevation: 2,
+            margin: const EdgeInsets.all(16.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildImage(correlation['corr_scatter']),
+                  const SizedBox(height: 8),
+                  Text(
+                    "The trend line (red) shows the relationship between traffic volume and accident frequency",
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Color _getCorrelationColor(double correlation) {
+    final absCorr = correlation.abs();
+    if (absCorr >= 0.7) {
+      return Colors.red;
+    } else if (absCorr >= 0.4) {
+      return Colors.orange;
+    } else if (absCorr >= 0.2) {
+      return Colors.yellow[700]!;
+    } else {
+      return Colors.green;
+    }
+  }
+
+  String _getCorrelationDescription(double correlation) {
+    final absCorr = correlation.abs();
+    if (absCorr >= 0.7) {
+      return "Strong ${correlation > 0 ? 'positive' : 'negative'} correlation";
+    } else if (absCorr >= 0.4) {
+      return "Moderate ${correlation > 0 ? 'positive' : 'negative'} correlation";
+    } else if (absCorr >= 0.2) {
+      return "Weak ${correlation > 0 ? 'positive' : 'negative'} correlation";
+    } else {
+      return "Very weak or no correlation";
+    }
+  }
+
   Widget _buildSafetyAnalysis() {
     if (data['safety_metrics'] == null)
       return const SizedBox(
@@ -388,27 +517,32 @@ class AnalysisResultWidget extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("On-going Blockages - ", style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                    overflow: TextOverflow.ellipsis,),
-                SizedBox(height: 200,child:Card(
-                  elevation: 10,
-                  child: ListView.builder(
-                    physics: AlwaysScrollableScrollPhysics(),
-                    itemCount: blockages['active_blockages'].length,
-                    itemBuilder: (context, index) {
-                      var blockage = blockages['active_blockages'][index];
-                      return ListTile(
-                        leading: Icon(Icons.warning, color: Colors.orange),
-                        title: Text(blockage["Reason"] ?? "Unknown"),
-                        subtitle: Text(
-                            "Location: ${blockage['From Street']} → ${blockage['To Street']}\n"
-                            "From: ${blockage['From Date']} | To: ${blockage['To Date']}"),
-                      );
-                    },
-                  ),
+                Text(
+                  "On-going Blockages - ",
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  overflow: TextOverflow.ellipsis,
                 ),
+                SizedBox(
+                  height: 200,
+                  child: Card(
+                    elevation: 10,
+                    child: ListView.builder(
+                      physics: AlwaysScrollableScrollPhysics(),
+                      itemCount: blockages['active_blockages'].length,
+                      itemBuilder: (context, index) {
+                        var blockage = blockages['active_blockages'][index];
+                        return ListTile(
+                          leading: Icon(Icons.warning, color: Colors.orange),
+                          title: Text(blockage["Reason"] ?? "Unknown"),
+                          subtitle: Text(
+                              "Location: ${blockage['From Street']} → ${blockage['To Street']}\n"
+                              "From: ${blockage['From Date']} | To: ${blockage['To Date']}"),
+                        );
+                      },
+                    ),
+                  ),
                 )
               ],
             )),
@@ -623,6 +757,7 @@ class AnalysisResultWidget extends StatelessWidget {
                     _buildVolumeAnalysis(),
 
                     Divider(
+                      thickness: 2,
                       color: Colors.grey[400],
                     ),
 
@@ -651,6 +786,14 @@ class AnalysisResultWidget extends StatelessWidget {
                     // Blockage analysis
                     _buildSectionTitle("Road Blockages", Icon(Icons.block)),
                     _buildBlockageAnalysis(),
+
+                    Divider(
+                      thickness: 2,
+                      color: Colors.grey[400],
+                    ),
+                    _buildSectionTitle(
+                        "Correlation Analysis", Icon(Icons.grain_sharp)),
+                    _buildCorrelationAnalysis(),  
                   ],
                 ),
               ),
