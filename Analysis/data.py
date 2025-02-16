@@ -37,8 +37,6 @@ with open('C:/Traffic_Data_DM/traffic_project_data/speeds.json', 'r') as f:
 # Convert to DataFrame
 speeds = json_to_csv(data)
 
-# blockage dataset
-block = scrape_blockage()       # returns cleaned scraped df
 
 @app.route("/street_analysis", methods=["GET"])
 def street_analysis():
@@ -54,18 +52,23 @@ def street_analysis():
     street_name = street.upper()
     boro = street_data['Boro'].unique()         # take the first boro
 
+
+    # blockage dataset
+    block = scrape_blockage()       # returns cleaned scraped df
+    blocked = block[block['From Street'].str.lower().str.contains(street.lower()) | block['To Street'].str.lower().str.contains(street.lower())]    #filtered for street
+    blocked['To Date'] = pd.to_datetime(blocked['To Date'], errors='coerce')
+    blocked['month'] = pd.to_datetime(blocked['From Date'], errors='coerce').dt.month
+
+
     if boro.ndim > 1:
         boro = boro[0]
 
     response = {}
     response["street_name"] = street_name
-    if not block.empty:
-        blocked = block[block['From Street'].str.lower().str.contains(street.lower()) | block['To Street'].str.lower().str.contains(street.lower())]
-        blocked['To Date'] = pd.to_datetime(blocked['To Date'], errors='coerce')
-        blocked['month'] = pd.to_datetime(blocked['From Date'], errors='coerce').dt.month
-
-        total_blockages = blocked['Reason'].nunique()
-        active_blockages = blocked[blocked['To Date'] >= pd.Timestamp.today()].to_dict(orient='records')
+    if not blocked.empty:
+        # total_blockages = blocked['Reason'].nunique()
+        total_blockages = blocked.groupby(['Reason', 'From Street', 'To Street', 'From Date', 'To Date'])['Time'].count().count()  #gives total unique blockages from data
+        active_blockages = blocked[blocked['To Date'] >= pd.Timestamp.today()].to_dict(orient='records')    # gives blockages whoes end date are yet to come ,.. thus active
         com_reason = blocked['Reason'].value_counts().head(5).to_dict()        # gives most common reasons of blockage
         monthly_blockages = blocked.groupby('month').size()
 
@@ -81,7 +84,7 @@ def street_analysis():
         plt.close()
 
         response["blockages"] = {
-            "total_blockages": total_blockages,
+            "total_blockages": int(total_blockages),
             "active_blockages": active_blockages,
             "com_reason": com_reason,
             "monthly_pattern":monthly_pattern,
