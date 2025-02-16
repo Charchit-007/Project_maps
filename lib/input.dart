@@ -392,11 +392,10 @@ class AnalysisResultWidget extends StatelessWidget {
               children: [
                 Text("On-going Blockages - ", style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                     overflow: TextOverflow.ellipsis,),
-                Card(
+                SizedBox(height: 200,child:Card(
                   elevation: 10,
                   child: ListView.builder(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
+                    physics: AlwaysScrollableScrollPhysics(),
                     itemCount: blockages['active_blockages'].length,
                     itemBuilder: (context, index) {
                       var blockage = blockages['active_blockages'][index];
@@ -410,6 +409,7 @@ class AnalysisResultWidget extends StatelessWidget {
                     },
                   ),
                 ),
+                )
               ],
             )),
           ],
