@@ -109,7 +109,7 @@ def street_analysis():
 
         # Traffic volume per hour plot
         plt.figure(figsize=(12, 6))
-        sns.barplot(data=street_data.groupby(by=['street','HH'])['Vol'].mean().reset_index(), x="HH", y="Vol")
+        sns.lineplot(data=street_data.groupby(by=['street','HH'])['Vol'].mean().reset_index(), x="HH", y="Vol")
         plt.xlabel("Hour of the Day")
         plt.ylabel("Average Traffic Volume")
         plt.title(f"Traffic Volume for {street}")
@@ -136,7 +136,7 @@ def street_analysis():
         total_injuries = street_acc['Persons Injured'].sum()
         total_fatalities = street_acc['Persons Killed'].sum()
         if total_accidents > 0:
-            severity_ratio = (total_injuries + total_fatalities) / total_accidents
+            severity_ratio = ((total_injuries + total_fatalities) / total_accidents) * 100
         else:
             severity_ratio = 0
 
@@ -209,6 +209,49 @@ def street_analysis():
         "severity_ratio": round(severity_ratio, 2),
         "accidents": accidents,
         }
+    
+        if not street_data.empty:
+            street_acc['Hour'] = pd.to_datetime(street_acc['Time'], format='%H:%M:%S').dt.hour  # Extract hour
+            hourly_accidents = street_acc.groupby(['Street Name', 'Hour']).size().reset_index(name='accident_count')
+
+            hourly_volume = street_data.groupby(['street', 'HH'])['Vol'].mean().reset_index()
+            # Convert street names to lowercase for consistency
+            hourly_volume['street'] = hourly_volume['street'].str.lower()
+            hourly_accidents['Street Name'] = hourly_accidents['Street Name'].str.lower()
+            merged_data = pd.merge(
+                hourly_volume,
+                hourly_accidents,
+                left_on=['street', 'HH'],
+                right_on=['Street Name', 'Hour'],
+                how='left'
+            )
+            merged_data = merged_data[merged_data['Street Name'].notna()]       #remove unmatched rows with NaN
+            corr = merged_data['Vol'].corr(merged_data['accident_count'])
+            
+            plt.figure(figsize=(8,6))
+            # Scatter plot with trend line
+            sns.regplot(x=merged_data['Vol'], y=merged_data['accident_count'], 
+                        scatter_kws={'s': 10, 'alpha': 0.5},  # Adjust dot size and transparency
+                        line_kws={'color': 'red'},  # Make the trend line red
+                        lowess=False)  # Use locally weighted regression for a smooth trend
+            plt.xlabel("Traffic Volume")
+            plt.ylabel("Accident Count")
+            plt.title("Traffic Volume vs Accident Count with Trend Line")
+            img = io.BytesIO()
+            plt.savefig(img, format='png')
+            img.seek(0)
+            corr_scatter = base64.b64encode(img.getvalue()).decode()
+            response['correlation'] = {
+                "corr":corr,
+                "corr_scatter":corr_scatter,
+            }
+
+        if not street_data.empty:
+            risk_analysis = peak_hour_func(street, street_data, street_acc)
+            response['risk_analysis'] = risk_analysis
+
+
+
 
     if not street_speed.empty:
     #     return jsonify({"error": "No Speed data found for this street"}), 404
@@ -275,9 +318,7 @@ def street_analysis():
         # trend_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
         # plt.close()
 
-        risk_analysis = peak_hour_func(street, street_data, street_acc)
-    
-        response['risk_analysis'] = risk_analysis
+
 
     return jsonify(response)
     #     
