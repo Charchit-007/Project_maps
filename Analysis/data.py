@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
 
+from blockage import scrape_blockage
 from json_read import json_to_csv
 from peak import peak_hour_func
 matplotlib.use('Agg')  # Use a non-GUI backend
@@ -36,6 +37,9 @@ with open('C:/Traffic_Data_DM/traffic_project_data/speeds.json', 'r') as f:
 # Convert to DataFrame
 speeds = json_to_csv(data)
 
+# blockage dataset
+block = scrape_blockage()       # returns cleaned scraped df
+
 @app.route("/street_analysis", methods=["GET"])
 def street_analysis():
     street = request.args.get("street")
@@ -49,12 +53,42 @@ def street_analysis():
 
     street_name = street.upper()
     boro = street_data['Boro'].unique()         # take the first boro
+
     if boro.ndim > 1:
         boro = boro[0]
-        
-    if street_data.empty:
-        return jsonify({"error": "No data found for this street"}), 404
-    else:
+
+    response = {}
+    response["street_name"] = street_name
+    if not block.empty:
+        blocked = block[block['From Street'].str.lower().str.contains(street.lower()) | block['To Street'].str.lower().str.contains(street.lower())]
+        blocked['To Date'] = pd.to_datetime(blocked['To Date'], errors='coerce')
+        blocked['month'] = pd.to_datetime(blocked['From Date'], errors='coerce').dt.month
+
+        total_blockages = blocked['Reason'].nunique()
+        active_blockages = blocked[blocked['To Date'] >= pd.Timestamp.today()].to_dict(orient='records')
+        com_reason = blocked['Reason'].value_counts().head(5).to_dict()        # gives most common reasons of blockage
+        monthly_blockages = blocked.groupby('month').size()
+
+        plt.figure(figsize=(10, 6))
+        monthly_blockages.plot(kind='bar')
+        plt.title(f"Monthly Blockage Patterns for {street}")
+        plt.xlabel("Month")
+        plt.ylabel("Number of Blockages")
+        img_io = io.BytesIO()
+        plt.savefig(img_io, format="png", bbox_inches="tight")
+        img_io.seek(0)
+        monthly_pattern = base64.b64encode(img_io.getvalue()).decode("utf-8")
+        plt.close()
+
+        response["blockages"] = {
+            "total_blockages": total_blockages,
+            "active_blockages": active_blockages,
+            "com_reason": com_reason,
+            "monthly_pattern":monthly_pattern,
+        }
+
+    if not street_data.empty:
+        # return jsonify({"error": "No data found for this street"}), 404
         # Most congested hour
         most_congested = dict(
             street_data.groupby('street').apply(lambda x: x.groupby('HH')['Vol'].mean().agg(['idxmax','max'])).reset_index()
@@ -84,10 +118,15 @@ def street_analysis():
         img_base64 = base64.b64encode(img_io.getvalue()).decode("utf-8")
         plt.close()
 
+        response["volume_metrics"] = {
+            "most_congested_hour": most_congested,
+            "least_congested_hour": least_congested,
+            "hour_plot": img_base64,
+        }
 
-    if street_acc.empty:
-        return jsonify({"error": "No Accident data found for this street"}), 404
-    else:
+    if not street_acc.empty:
+    #     return jsonify({"error": "No Accident data found for this street"}), 404
+    # else:
         # -------------------------------------------
         # Calculate safety metrics
         total_accidents = len(street_acc)
@@ -159,10 +198,18 @@ def street_analysis():
         vehicle_types_img = base64.b64encode(img_io.getvalue()).decode("utf-8")
         plt.close()
         # -------------------------------------------
+        response["safety_metrics"] = {
+        "vehicle_types": vehicle_types_img,
+        "total_accidents": int(total_accidents),
+        "total_injuries": int(total_injuries),
+        "total_fatalities": int(total_fatalities),
+        "severity_ratio": round(severity_ratio, 2),
+        "accidents": accidents,
+        }
 
-    if street_speed.empty:
-        return jsonify({"error": "No Speed data found for this street"}), 404
-    else:
+    if not street_speed.empty:
+    #     return jsonify({"error": "No Speed data found for this street"}), 404
+    # else:
         # Get average speeds and volumes by hour
         hourly_volume = street_data.groupby('HH')['Vol'].mean().reset_index()
         
@@ -225,33 +272,24 @@ def street_analysis():
         # trend_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
         # plt.close()
 
-    risk_analysis = peak_hour_func(street, street_data, street_acc)
-  
-    return jsonify({
-        "street_name": street_name,
-        "most_congested_hour": most_congested,
-        "least_congested_hour": least_congested,
-        "hour_plot": img_base64,
-        "accidents": accidents,
-        "vehicle_types": vehicle_types_img,
-        # ---------------------
-        "safety_metrics":{
-            "total_accidents": int(total_accidents),
-            "total_injuries": int(total_injuries),
-            "total_fatalities": int(total_fatalities),
-            "severity_ratio": round(severity_ratio, 2),
-        },
-        # "trend_analysis": {
-        #     "trend_plot": trend_plot,
-        #     "volume_growth": float(monthly_volumes.iloc[-1]['Average Volume'] / monthly_volumes.iloc[0]['Average Volume'] - 1) 
-        #         if len(monthly_volumes) > 1 else None,
-        #     "accident_growth": float(monthly_accidents.iloc[-1]['Accident Count'] / monthly_accidents.iloc[0]['Accident Count'] - 1)
-        #         if len(monthly_accidents) > 1 else None
-        # },
-        "risk_analysis":risk_analysis,
-        # "boro_volume": boro_volume,
-        # "weekly_accidents": weekly_accidents_img,
-    })
+        risk_analysis = peak_hour_func(street, street_data, street_acc)
+    
+        response['risk_analysis'] = risk_analysis
+
+    return jsonify(response)
+    #     
+    #     # ---------------------
+    #     # "trend_analysis": {
+    #     #     "trend_plot": trend_plot,
+    #     #     "volume_growth": float(monthly_volumes.iloc[-1]['Average Volume'] / monthly_volumes.iloc[0]['Average Volume'] - 1) 
+    #     #         if len(monthly_volumes) > 1 else None,
+    #     #     "accident_growth": float(monthly_accidents.iloc[-1]['Accident Count'] / monthly_accidents.iloc[0]['Accident Count'] - 1)
+    #     #         if len(monthly_accidents) > 1 else None
+    #     # },
+    #     "risk_analysis":,
+    #     # "boro_volume": boro_volume,
+    #     # "weekly_accidents": weekly_accidents_img,
+    # })
 
 if __name__ == "__main__":
     app.run(debug=True)

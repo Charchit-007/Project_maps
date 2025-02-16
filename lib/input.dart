@@ -5,7 +5,8 @@ import 'dart:typed_data';
 
 class TrafficAnalysisApp extends StatelessWidget {
   final Map<String, dynamic> location;
-  const TrafficAnalysisApp({Key? key, required this.location}): super(key: key);
+  const TrafficAnalysisApp({Key? key, required this.location})
+      : super(key: key);
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -17,7 +18,7 @@ class TrafficAnalysisApp extends StatelessWidget {
 
 class StreetInputScreen extends StatefulWidget {
   final Map<String, dynamic> location;
-  const StreetInputScreen({Key? key, required this.location}): super(key: key);
+  const StreetInputScreen({Key? key, required this.location}) : super(key: key);
   @override
   _StreetInputScreenState createState() => _StreetInputScreenState();
 }
@@ -59,11 +60,12 @@ class _StreetInputScreenState extends State<StreetInputScreen> {
       });
     }
   }
-  
-   @override
+
+  @override
   void initState() {
     super.initState();
-    String streetName = widget.location['address']['road'] ?? ""; // ✅ Extract street name
+    String streetName =
+        widget.location['address']['road'] ?? ""; // ✅ Extract street name
     _controller = TextEditingController(text: streetName); // ✅ Pre-fill input
     fetchAnalysis(_controller.text);
   }
@@ -110,264 +112,422 @@ class AnalysisResultWidget extends StatelessWidget {
 
   AnalysisResultWidget({required this.data});
 
-  Widget _buildSectionTitle(String title) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 16.0),
-    child: Text(
-      title,
-      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-    ),
-  );
-}
-
-Widget _buildVolumeAnalysis() {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Most and least congested hours
-      Row(
-        children: [
-          Expanded(
-            child: _buildInfoCard(
-              "Most Congested Hour",
-              "${data['most_congested_hour']['idxmax']}:00",
-              "Avg Volume: ${data['most_congested_hour']['max']}",
-              Icons.arrow_upward,
-              Colors.red,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildInfoCard(
-              "Least Congested Hour",
-              "${data['least_congested_hour']['idxmin']}:00",
-              "Avg Volume: ${data['least_congested_hour']['min']}",
-              Icons.arrow_downward,
-              Colors.green,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
-      
-      // Hourly volume chart
-      _buildImage(data['hour_plot']),
-    ],
-  );
-}
-
-Widget _buildSafetyAnalysis() {
-  if (data['safety_metrics'] == null) return const SizedBox.shrink();
-  
-  final safetyMetrics = data['safety_metrics'];
-  
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Safety metrics in cards
-      Row(
-        children: [
-          Expanded(
-            child: _buildInfoCard(
-              "Total Accidents",
-              "${safetyMetrics['total_accidents']}",
-              "",
-              Icons.car_crash,
-              Colors.amber,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildInfoCard(
-              "Total Injuries",
-              "${safetyMetrics['total_injuries']}",
-              "Severity Ratio: ${safetyMetrics['severity_ratio']}",
-              Icons.local_hospital,
-              Colors.orange,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildInfoCard(
-              "Total Fatalities",
-              "${safetyMetrics['total_fatalities']}",
-              "",
-              Icons.dangerous,
-              Colors.red,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 24),
-      
-      // Accidents by hour chart
-      Text(
-        "Accidents Distribution by Hour",
-        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-      ),
-      const SizedBox(height: 8),
-      _buildImage(data['accidents']),
-    ],
-  );
-}
-
-Widget _buildTrendAnalysis() {
-  if (data['trend_analysis'] == null) return const SizedBox.shrink();
-  
-  final trendAnalysis = data['trend_analysis'];
-  final volumeGrowth = trendAnalysis['volume_growth'];
-  final accidentGrowth = trendAnalysis['accident_growth'];
-  
-  String formatGrowth(double? value) {
-    if (value == null) return "N/A";
-    final percentage = (value * 100).toStringAsFixed(1);
-    return value >= 0 ? "+$percentage%" : "$percentage%";
-  }
-  
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Growth metrics
-      Row(
-        children: [
-          Expanded(
-            child: _buildInfoCard(
-              "Volume Growth",
-              formatGrowth(volumeGrowth),
-              "Year over Year",
-              volumeGrowth != null && volumeGrowth > 0 ? Icons.trending_up : Icons.trending_down,
-              volumeGrowth != null && volumeGrowth > 0 ? Colors.red : Colors.green,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildInfoCard(
-              "Accident Growth",
-              formatGrowth(accidentGrowth),
-              "Year over Year",
-              accidentGrowth != null && accidentGrowth > 0 ? Icons.trending_up : Icons.trending_down,
-              accidentGrowth != null && accidentGrowth > 0 ? Colors.red : Colors.green,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
-      
-      // Trend chart
-      _buildImage(trendAnalysis['trend_plot']),
-    ],
-  );
-}
-
-Widget _buildRiskAnalysis() {
-  if (data['risk_analysis'] == null) return const SizedBox.shrink();
-  
-  final riskAnalysis = data['risk_analysis'];
-  
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Risk metrics
-      Row(
-        children: [
-          Expanded(
-            child: _buildInfoCard(
-              "Riskiest Hour",
-              "${riskAnalysis['riskiest_hour']}:00",
-              "Risk Factor: ${riskAnalysis['risk_ratio'].toStringAsFixed(2)}",
-              Icons.warning,
-              Colors.deepOrange,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildInfoCard(
-              "Peak Volume Hour",
-              "${riskAnalysis['peak_volume_hour']}:00",
-              "",
-              Icons.timeline,
-              Colors.blue,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _buildInfoCard(
-              "Peak Accident Hour",
-              "${riskAnalysis['peak_accident_hour']}:00",
-              "",
-              Icons.car_crash,
-              Colors.red,
-            ),
-          ),
-        ],
-      ),
-      const SizedBox(height: 16),
-      
-      // Risk analysis chart
-      if (riskAnalysis['risk_plot'] != null)
-        _buildImage(riskAnalysis['risk_plot']),
-    ],
-  );
-}
-
-Widget _buildInfoCard(String title, String value, String subtitle, IconData icon, Color color) {
-  return Card(
-    elevation: 3,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    child: Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 24),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+  Widget _buildSectionTitle(String title, Icon icon) {
+    return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Row(children: [
+          Icon(icon.icon),
           Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            title,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
-          if (subtitle.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+        ]));
+  }
+
+  Widget _buildVolumeAnalysis() {
+    // ------ Volume analysis displ
+    if (data['volume_metrics'] == null)
+      return const SizedBox(
+        child: Text(
+          "No data dound.",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+
+    return ConstrainedBox(
+        constraints: BoxConstraints(minHeight: 150),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize
+              .min, // Ensures the column takes only the required space
+
+          children: [
+            // Most and least congested hours
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInfoCard(
+                    "Most Congested Hour",
+                    "${data['volume_metrics']['most_congested_hour']['idxmax']['0']}:00",
+                    "Avg Volume: ${data['volume_metrics']['most_congested_hour']['max']['0']}",
+                    Icons.arrow_upward,
+                    Colors.red,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildInfoCard(
+                    "Least Congested Hour",
+                    "${data['volume_metrics']['least_congested_hour']['idxmin']['0']}:00",
+                    "Avg Volume: ${data['volume_metrics']['least_congested_hour']['min']['0']}",
+                    Icons.arrow_downward,
+                    Colors.green,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Hourly volume chart
+            _buildImage(data['volume_metrics']['hour_plot']),
+          ],
+        ));
+  }
+
+  Widget _buildSafetyAnalysis() {
+    if (data['safety_metrics'] == null)
+      return const SizedBox(
+        child: Text(
+          "No data dound.",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    final safetyMetrics = data['safety_metrics'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Safety metrics in cards
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoCard(
+                "Total Accidents",
+                "${safetyMetrics['total_accidents']}",
+                "",
+                Icons.car_crash,
+                Colors.amber,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildInfoCard(
+                "Total Injuries",
+                "${safetyMetrics['total_injuries']}",
+                "Severity Ratio: ${safetyMetrics['severity_ratio']}",
+                Icons.local_hospital,
+                Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildInfoCard(
+                "Total Fatalities",
+                "${safetyMetrics['total_fatalities']}",
+                "",
+                Icons.dangerous,
+                Colors.red,
+              ),
             ),
           ],
-        ],
-      ),
-    ),
-  );
-}
+        ),
+        const SizedBox(height: 24),
 
-Widget _buildImage(String? base64Image) {
-  if (base64Image == null || base64Image.isEmpty) {
-    return const SizedBox(
-      height: 200,
-      child: Center(child: Text("No chart available")),
+        // Accidents by hour chart
+        Text(
+          "Accidents Distribution by Hour",
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        _buildImage(safetyMetrics['accidents']),
+
+        // Vehicles Involved in Accidents
+        _buildSectionTitle(
+            "Vehicles Involved in Accidents", Icon(Icons.car_crash_rounded)),
+        _buildImage(safetyMetrics['vehicle_types']),
+      ],
     );
   }
-  
-  return Container(
-    margin: const EdgeInsets.symmetric(vertical: 16),
-    height: 300,
-    width: double.infinity,
-    child: Image.memory(
-      base64Decode(base64Image),
-      fit: BoxFit.contain,
-    ),
-  );
-}
+
+  Widget _buildTrendAnalysis() {
+    if (data['trend_analysis'] == null)
+      return const SizedBox(
+        child: Text(
+          "No data dound.",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+
+    final trendAnalysis = data['trend_analysis'];
+    final volumeGrowth = trendAnalysis['volume_growth'];
+    final accidentGrowth = trendAnalysis['accident_growth'];
+
+    String formatGrowth(double? value) {
+      if (value == null) return "N/A";
+      final percentage = (value * 100).toStringAsFixed(1);
+      return value >= 0 ? "+$percentage%" : "$percentage%";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Growth metrics
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoCard(
+                "Volume Growth",
+                formatGrowth(volumeGrowth),
+                "Year over Year",
+                volumeGrowth != null && volumeGrowth > 0
+                    ? Icons.trending_up
+                    : Icons.trending_down,
+                volumeGrowth != null && volumeGrowth > 0
+                    ? Colors.red
+                    : Colors.green,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildInfoCard(
+                "Accident Growth",
+                formatGrowth(accidentGrowth),
+                "Year over Year",
+                accidentGrowth != null && accidentGrowth > 0
+                    ? Icons.trending_up
+                    : Icons.trending_down,
+                accidentGrowth != null && accidentGrowth > 0
+                    ? Colors.red
+                    : Colors.green,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Trend chart
+        _buildImage(trendAnalysis['trend_plot']),
+      ],
+    );
+  }
+
+  Widget _buildRiskAnalysis() {
+    if (data['risk_analysis'] == null)
+      return const SizedBox(
+        child: Text(
+          "No data dound.",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+
+    final riskAnalysis = data['risk_analysis'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Risk metrics
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoCard(
+                "Riskiest Hour",
+                "${riskAnalysis['riskiest_hour']}:00",
+                "Risk Factor: ${riskAnalysis['risk_ratio'].toStringAsFixed(2)}",
+                Icons.warning,
+                Colors.deepOrange,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildInfoCard(
+                "Peak Volume Hour",
+                "${riskAnalysis['peak_volume_hour']}:00",
+                "",
+                Icons.timeline,
+                Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildInfoCard(
+                "Peak Accident Hour",
+                "${riskAnalysis['peak_accident_hour']}:00",
+                "",
+                Icons.car_crash,
+                Colors.red,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Risk analysis chart
+        if (riskAnalysis['risk_plot'] != null)
+          _buildImage(riskAnalysis['risk_plot']),
+      ],
+    );
+  }
+
+  Widget _buildBlockageAnalysis() {
+    if (data['blockages'] == null) {
+      return const SizedBox(
+        child: Text(
+          "No blockage data found.",
+          style: TextStyle(color: Colors.red),
+        ),
+      );
+    }
+
+    final blockages = data['blockages'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Blockage metrics
+        Row(
+          children: [
+            Expanded(
+              child: _buildInfoCard(
+                "Total Blockages",
+                "${blockages['total_blockages']}",
+                "",
+                Icons.block,
+                Colors.red,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("On-going Blockages - ", style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    overflow: TextOverflow.ellipsis,),
+                Card(
+                  elevation: 10,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
+                    itemCount: blockages['active_blockages'].length,
+                    itemBuilder: (context, index) {
+                      var blockage = blockages['active_blockages'][index];
+                      return ListTile(
+                        leading: Icon(Icons.warning, color: Colors.orange),
+                        title: Text(blockage["Reason"] ?? "Unknown"),
+                        subtitle: Text(
+                            "Location: ${blockage['From Street']} → ${blockage['To Street']}\n"
+                            "From: ${blockage['From Date']} | To: ${blockage['To Date']}"),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            )),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        // Common reasons section
+        Text(
+          "Common Reasons for Blockages",
+        ),
+        const SizedBox(height: 16),
+        _buildCommonReasons(blockages['com_reason']),
+        const SizedBox(height: 24),
+
+        // Monthly pattern chart
+        Text(
+          "Monthly Blockage Patterns",
+        ),
+        const SizedBox(height: 16),
+        if (blockages['monthly_pattern'] != null)
+          _buildImage(blockages['monthly_pattern']),
+      ],
+    );
+  }
+
+  Widget _buildCommonReasons(Map<String, dynamic> reasons) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: reasons.entries.map((entry) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      entry.key,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  Text(
+                    "${entry.value}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(
+      String title, String value, String subtitle, IconData icon, Color color) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: color, size: 24),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage(String? base64Image) {
+    if (base64Image == null || base64Image.isEmpty) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: Text("No chart available")),
+      );
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      height: 300,
+      width: double.infinity,
+      child: Image.memory(
+        base64Decode(base64Image),
+        fit: BoxFit.contain,
+      ),
+    );
+  }
 
 //   @override
 //   Widget build(BuildContext context) {
@@ -441,50 +601,66 @@ Widget _buildImage(String? base64Image) {
 //   }
 // }
 
-@override
-Widget build(BuildContext context) {
-  return Expanded(
-    child: Column(
-      children: [
-        Text(
-          "${data['street_name']}",
-          style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-        ),
-        Flexible(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Traffic Volume Analysis
-                  _buildSectionTitle("Traffic Volume Analysis"),
-                  _buildVolumeAnalysis(),
-                  
-                  // Safety and Accident Analysis
-                  _buildSectionTitle("Safety Analysis"),
-                  _buildSafetyAnalysis(),
-                  
-                  // Vehicles Involved in Accidents
-                  _buildSectionTitle("Vehicles Involved in Accidents"),
-                  _buildImage(data['vehicle_types']),
-                  
-                  // Trend Analysis
-                  // _buildSectionTitle("Trend Analysis"),
-                  // _buildTrendAnalysis(),
-                  
-                  // Risk Analysis
-                  _buildSectionTitle("Risk Assessment"),
-                  _buildRiskAnalysis(),
-                ],
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            "${data['street_name']}",
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Traffic Volume Analysis
+                    _buildSectionTitle(
+                        "Traffic Volume Analysis", Icon(Icons.traffic)),
+                    _buildVolumeAnalysis(),
+
+                    Divider(
+                      color: Colors.grey[400],
+                    ),
+
+                    // Safety and Accident Analysis
+                    _buildSectionTitle(
+                        "Safety Analysis", Icon(Icons.health_and_safety)),
+                    _buildSafetyAnalysis(),
+
+                    Divider(
+                      color: Colors.grey[400],
+                    ),
+
+                    // Trend Analysis
+                    // _buildSectionTitle("Trend Analysis"),
+                    // _buildTrendAnalysis(),
+
+                    // Risk Analysis
+                    _buildSectionTitle(
+                        "Risk Assessment", Icon(Icons.dangerous)),
+                    _buildRiskAnalysis(),
+
+                    Divider(
+                      color: Colors.grey[400],
+                    ),
+
+                    // Blockage analysis
+                    _buildSectionTitle("Road Blockages", Icon(Icons.block)),
+                    _buildBlockageAnalysis(),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}}
+        ],
+      ),
+    );
+  }
+}
 
 class _Stats extends StatelessWidget {
   final String title;
@@ -530,20 +706,3 @@ class _Stats extends StatelessWidget {
             )));
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
