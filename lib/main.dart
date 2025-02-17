@@ -5,9 +5,12 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'input.dart';
+import 'dashboard.dart';
 
 void main() {
-  runApp(const OpenStreetMapRouteApp());
+  runApp(MaterialApp(home:const DashboardPage()));
+  // runApp(const OpenStreetMapRouteApp());
+
 }
 
 class OpenStreetMapRouteApp extends StatelessWidget {
@@ -520,6 +523,7 @@ Widget _buildPredictionBox() {
               ],
             ),
           ),
+          
         ],
       ),
     );
@@ -958,7 +962,7 @@ Widget _buildPredictionBox() {
                   ),
                   _buildMapOptionsMenu(),
                   _buildSidebar(),
-                  _buildRouteInfo(),
+                  
                   _buildPredictionBox(),
                   
                   if (_isLoading)
