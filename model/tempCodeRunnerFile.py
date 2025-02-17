@@ -1,1 +1,0 @@
-streets = df[['street', 'Latitude', 'Longitude']].drop_duplicates().to_dict(orient="records")

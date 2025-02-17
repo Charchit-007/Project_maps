@@ -22,10 +22,10 @@ CORS(app)  # Enable CORS for all routes
 # Volume data
 df = pd.read_csv(r"C:\Users\Aman\Downloads\Automated_Traffic_Volume_Counts_20250205.csv")
 # Load trained model
-model = joblib.load(r"C:\Project_maps\model\traffic_model.pkl")
+model = joblib.load(r"C:\DM Project\traffic_model.pkl")
 
 # Load dataset
-vdf = pd.read_csv(r"C:\Project_maps\model\volume_dataset.csv")
+vdf = pd.read_csv(r"C:\DM Project\volume_dataset.csv")
 
 df['Yr'] = df['Yr'].astype(str)
 df['M'] = df['M'].astype(str)
@@ -343,20 +343,20 @@ def street_analysis():
     #     # "weekly_accidents": weekly_accidents_img,
     # })
 
-from flask import Flask, jsonify, request
-import joblib
-import pandas as pd
-from flask_cors import CORS
-from datetime import datetime, timedelta, timezone
+# from flask import Flask, jsonify, request
+# import joblib
+# import pandas as pd
+# from flask_cors import CORS
+# from datetime import datetime, timedelta, timezone
 
-app = Flask(__name__)
-CORS(app)
+# app = Flask(__name__)
+# CORS(app)
 
-# Load trained model
-model = joblib.load(r"model\traffic_model.pkl")
+# # Load trained model
+# model = joblib.load(r"C:\DM Project\traffic_model.pkl")
 
-# Load dataset
-vdf = pd.read_csv(r"model\volume_dataset.csv")
+# # Load dataset
+# vdf = pd.read_csv(r"C:\DM Project\volume_dataset.csv")
 
 # Function to predict traffic without weather data
 # def predict_traffic(lat, lon, hour, minute):
