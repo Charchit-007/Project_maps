@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_heatmap/flutter_map_heatmap.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -21,6 +22,32 @@ class OpenStreetMapRouteApp extends StatelessWidget {
   }
 }
 
+class AccidentData {
+  final LatLng position;
+  final int count;
+  final int injuries;
+  final int deaths;
+  final List<Map<String, dynamic>> topFactors;
+
+  AccidentData({
+    required this.position,
+    required this.count,
+    required this.injuries,
+    required this.deaths,
+    required this.topFactors,
+  });
+
+  factory AccidentData.fromJson(Map<String, dynamic> json) {
+    return AccidentData(
+      position: LatLng(json['lat'], json['lng']),
+      count: json['count'],
+      injuries: json['injuries'],
+      deaths: json['deaths'],
+      topFactors: List<Map<String, dynamic>>.from(json['topFactors']),
+    );
+  }
+}
+
 class MapsPage extends StatefulWidget {
   const MapsPage({Key? key}) : super(key: key);
 
@@ -36,9 +63,12 @@ class _MapsPageState extends State<MapsPage> {
   List<LatLng> _routePoints = [];
   bool _isLoading = false;
   bool _showTraffic = false;
+  bool _showHeatmap = false;
+
   Map<String, dynamic> _routeInfo = {};
   bool _showSidebar = false;
   Map<String, dynamic>? _selectedLocation;
+  String _streetName = '';
 
   Map<String, dynamic>? _selectedOriginLocation;
   Map<String, dynamic>? _selectedDestinationLocation;
@@ -50,11 +80,60 @@ class _MapsPageState extends State<MapsPage> {
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
 
+  // Accident data
+  List<AccidentData> _accidentData = [];
+  List<Marker> _accidentMarkers = [];
+
+  Map<LatLng, Color> _streetTraffic =
+      {}; // 🔥 Add this line to store traffic colors
+
+  double? _futureTrafficChange; // Store traffic change
+
   // Initial center set to Manhattan, New York
   final LatLng _manhattanCenter = const LatLng(40.7831, -73.9712);
 
   bool _showRouteSearch =
       false; // New state variable to track which search to show
+
+Widget _buildPredictionBox() {
+  if (_futureTrafficChange == null) return const SizedBox.shrink();
+
+  return Positioned(
+    top: 80, // Below the search bar
+    right: 16, // Aligned to the right
+    child: Card(
+      color: Colors.white,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min, // Only take up needed width
+          children: [
+            const Icon(
+              Icons.timeline,
+              size: 20,
+              color: Colors.blue,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Traffic in 30 min: ${_futureTrafficChange!.toStringAsFixed(2)}%",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAccidentData();
+    _fetchAllTrafficPredictions();
+  }
 
   Future<void> _searchLocation(String query, bool isOrigin) async {
     if (query.isEmpty) return;
@@ -84,7 +163,220 @@ class _MapsPageState extends State<MapsPage> {
       // Silent failure for search suggestions
     }
   }
+  
 
+  Future<void> _fetchRouteTraffic() async {
+    if (_routePoints.isEmpty) return;
+
+    final List<Map<String, double>> routePointsData = _routePoints.map((point) {
+      return {"latitude": point.latitude, "longitude": point.longitude};
+    }).toList();
+
+    final response = await http.post(
+      Uri.parse("http://localhost:5000/predict_route"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"route_points": routePointsData}),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+
+      setState(() {
+        _streetTraffic.clear();
+        for (var item in data) {
+          LatLng point = LatLng(item["latitude"], item["longitude"]);
+          Color color;
+
+          switch (item["traffic_color"]) {
+            case "red":
+              color = Colors.red;
+              break;
+            case "yellow":
+              color = Colors.yellow;
+              break;
+            default:
+              color = Colors.green;
+              break;
+          }
+
+          _streetTraffic[point] = color;
+        }
+
+        _showTraffic = true;
+      });
+    } else {
+      print("Error fetching route traffic");
+    }
+  }
+
+  Future<void> _fetchFutureTrafficChange() async {
+    if (_routePoints.isEmpty) return;
+
+    final List<Map<String, double>> routePointsData = _routePoints.map((point) {
+      return {"latitude": point.latitude, "longitude": point.longitude};
+    }).toList();
+
+    final response = await http.post(
+      Uri.parse("http://localhost:5000/predict_future"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"route_points": routePointsData}),
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+
+      double avgChange = data.fold<double>(0,
+              (sum, item) => sum + (item["change_percent"] as num).toDouble()) /
+          data.length;
+
+      setState(() {
+        _futureTrafficChange = avgChange;
+      });
+    } else {
+      print("Error fetching future traffic change");
+    }
+  }
+
+  Future<void> _fetchAllTrafficPredictions() async {
+    final response =
+        await http.get(Uri.parse("http://localhost:5000/predict_all"));
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+
+      setState(() {
+        for (var item in data) {
+          LatLng streetLocation = LatLng(item["latitude"], item["longitude"]);
+          Color trafficColor;
+
+          switch (item["traffic_color"]) {
+            case "red":
+              trafficColor = Colors.red;
+              break;
+            case "yellow":
+              trafficColor = Colors.yellow;
+              break;
+            default:
+              trafficColor = Colors.green;
+              break;
+          }
+
+          _streetTraffic[streetLocation] = trafficColor;
+        }
+      });
+    } else {
+      print("Error fetching traffic predictions");
+    }
+  }
+
+  Future<void> _loadAccidentData() async {
+    try {
+      // Load your JSON file
+      final String jsonString = await DefaultAssetBundle.of(context)
+          .loadString('assets/nyc_accident_hotspots.json');
+
+      final Map<String, dynamic> data = json.decode(jsonString);
+      final List<dynamic> heatmapData = data['heatmapData'];
+
+      setState(() {
+        _accidentData =
+            heatmapData.map((item) => AccidentData.fromJson(item)).toList();
+      });
+    } catch (e) {
+      print('Error loading accident data: $e');
+    }
+  }
+
+  List<WeightedLatLng> _getHeatmapPoints() {
+    return _accidentData.map((data) {
+      // Create a weighted point based on accident count
+      return WeightedLatLng(
+        data.position,
+        data.count.toDouble(),
+      );
+    }).toList();
+  }
+
+  void _generateAccidentMarkers() {
+    if (_routePoints.isEmpty) return;
+
+    _accidentMarkers.clear();
+
+    // Define threshold for high-risk areas (e.g., areas with more than 500 accidents)
+    const int highRiskThreshold = 500;
+
+    for (var accidentPoint in _accidentData) {
+      // Only show markers for high-risk areas
+      if (accidentPoint.count < highRiskThreshold) continue;
+
+      // Check if this accident point is close to our route
+      bool isNearRoute = _isPointNearRoute(accidentPoint.position);
+      if (!isNearRoute) continue;
+
+      // Add warning marker for this high-risk area
+      _accidentMarkers.add(
+        Marker(
+          point: accidentPoint.position,
+          child: GestureDetector(
+            onTap: () => _showAccidentDetails(accidentPoint),
+            child: const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.red,
+              size: 30,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showAccidentDetails(AccidentData data) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Accident-Prone Area'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Total Accidents: ${data.count}'),
+            Text('Injuries: ${data.injuries}'),
+            Text('Deaths: ${data.deaths}'),
+            const SizedBox(height: 8),
+            const Text('Top Factors:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            ...data.topFactors.map((factor) =>
+                Text('• ${factor['factor']}: ${factor['count']} incidents')),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isPointNearRoute(LatLng point) {
+    // Simple implementation: check if point is within a certain distance of any route point
+    const double maxDistanceInKm = 0.2; // 200 meters
+
+    for (var routePoint in _routePoints) {
+      final distance = const Distance().as(
+        LengthUnit.Kilometer,
+        point,
+        routePoint,
+      );
+
+      if (distance < maxDistanceInKm) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   void _showLocationDetails(Map<String, dynamic> location, bool isOrigin) {
     if (isOrigin) {
@@ -152,8 +444,6 @@ class _MapsPageState extends State<MapsPage> {
   //     }
   //   });
   // }
-
-  
 
   Widget _buildSearchBar() {
     return Card(
@@ -249,8 +539,9 @@ class _MapsPageState extends State<MapsPage> {
         bottom: 0,
         child: Card(
             margin: const EdgeInsets.all(8),
-            child: IntrinsicHeight( // Ensures height fits the content
-          child: Container(
+            child: IntrinsicHeight(
+                // Ensures height fits the content
+                child: Container(
               width: 320, // Slightly wider to accommodate both panels
               padding: const EdgeInsets.all(8),
               child: Column(
@@ -331,12 +622,21 @@ class _MapsPageState extends State<MapsPage> {
         child: PopupMenuButton<String>(
           icon: const Icon(Icons.layers),
           onSelected: (String value) {
-            setState(() {
+            setState(() async {
               switch (value) {
                 case 'traffic':
                   _showTraffic = !_showTraffic;
                   break;
-                // Add more cases for future options
+                case 'heatmap':
+                  _showHeatmap = !_showHeatmap;
+                  if (_showTraffic) {
+                    await _fetchAllTrafficPredictions(); // Fetch all trained street traffic
+                  } else {
+                    setState(() {
+                      _streetTraffic.clear(); // Clear traffic when toggled OFF
+                    });
+                  }
+                  break;
               }
             });
           },
@@ -346,13 +646,10 @@ class _MapsPageState extends State<MapsPage> {
               checked: _showTraffic,
               child: const Text('Show Traffic'),
             ),
-            const PopupMenuItem<String>(
-              value: 'accidents',
-              child: Text('Accidents (Coming Soon)'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'construction',
-              child: Text('Construction (Coming Soon)'),
+            CheckedPopupMenuItem<String>(
+              value: 'heatmap',
+              checked: _showHeatmap,
+              child: const Text('Show Accident Heatmap'),
             ),
           ],
         ),
@@ -394,6 +691,9 @@ class _MapsPageState extends State<MapsPage> {
             'distance': route['distance'],
             'duration': route['duration'],
           };
+
+         
+          _generateAccidentMarkers();
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -600,6 +900,28 @@ class _MapsPageState extends State<MapsPage> {
                         urlTemplate: _getMapUrl(),
                         subdomains: const ['a', 'b', 'c'],
                       ),
+                      if (_showHeatmap && _accidentData.isNotEmpty)
+                        HeatMapLayer(
+                          heatMapDataSource: InMemoryHeatMapDataSource(
+                            data: _getHeatmapPoints(),
+                          ),
+                          heatMapOptions: HeatMapOptions(radius: 20, gradient: {
+                            0.2: Colors.blue, // Low intensity
+                            0.5: Colors.yellow, // Medium intensity
+                            0.7: Colors.orange, // High intensity
+                            0.9: Colors.red, // Very high intensity
+                          }),
+                        ),
+                      if (_showTraffic)
+                        PolylineLayer(
+                          polylines: _streetTraffic.entries.map((entry) {
+                            return Polyline(
+                              points: [entry.key], // Street coordinates
+                              strokeWidth: 5.0,
+                              color: entry.value, // Predicted traffic color
+                            );
+                          }).toList(),
+                        ),
                       PolylineLayer(
                         polylines: [
                           Polyline(
@@ -629,13 +951,16 @@ class _MapsPageState extends State<MapsPage> {
                                 size: 40,
                               ),
                             ),
+                          ..._accidentMarkers,
                         ],
                       ),
                     ],
                   ),
                   _buildMapOptionsMenu(),
                   _buildSidebar(),
-                  // _buildRouteInfo(),
+                  _buildRouteInfo(),
+                  _buildPredictionBox(),
+                  
                   if (_isLoading)
                     const Center(
                       child: CircularProgressIndicator(),
@@ -647,11 +972,35 @@ class _MapsPageState extends State<MapsPage> {
         ),
       ]),
       floatingActionButton: _showRouteSearch
-          ? FloatingActionButton(
-              onPressed: _loadRoute,
-              child: const Icon(Icons.directions),
-            )
-          : null,
+    ? FloatingActionButton(
+        onPressed: () async {
+          try {
+            // First load the route
+            await _loadRoute();
+            
+            if (_routePoints.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("No route available!")),
+              );
+              return;
+            }
+
+            
+            // Now fetch both current and future traffic data
+            await Future.wait([
+              
+              _fetchFutureTrafficChange(),
+            ]);
+
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Error loading traffic data: $e")),
+            );
+          }
+        },
+        child: const Icon(Icons.directions),
+      )
+    : null,
     );
   }
 }

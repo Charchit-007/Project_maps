@@ -66,6 +66,7 @@ flutter:
     - assets/risk_areas.json
     - assets/heatmap_data.json
     - assets/accident_zones.geojson
+    - assets/nyc_accident_hotspots.json
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
