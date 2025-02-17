@@ -8,8 +8,10 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
 import joblib
+import logging
 from datetime import datetime, timedelta, timezone
 
+from dashb import traffic
 from blockage import scrape_blockage
 from json_read import json_to_csv
 from peak import peak_hour_func
@@ -20,12 +22,12 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Volume data
-df = pd.read_csv(r"C:\Users\Aman\Downloads\Automated_Traffic_Volume_Counts_20250205.csv")
+df = pd.read_csv(r"C:\Traffic_Data_DM\traffic_project_data\Automated_Traffic_Volume_Counts_20250127.csv")
 # Load trained model
-model = joblib.load(r"C:\DM Project\traffic_model.pkl")
+model = ""
 
 # Load dataset
-vdf = pd.read_csv(r"C:\DM Project\volume_dataset.csv")
+vdf = pd.read_csv(r"C:\Traffic_Data_DM\traffic_project_data\Automated_Traffic_Volume_Counts_20250127.csv")
 
 df['Yr'] = df['Yr'].astype(str)
 df['M'] = df['M'].astype(str)
@@ -34,25 +36,30 @@ df['D'] = df['D'].astype(str)
 df['date'] = df[['Yr', 'M', 'D']].agg('-'.join, axis=1)
 
 # Accident data
-df_acc = pd.read_csv(r"C:\Users\Aman\Downloads\NYC_Collisions\NYC_Collisions.csv")
+df_acc = pd.read_csv(r"C:\Traffic_Data_DM\traffic_project_data\NYC_Collisions\NYC_Collisions.csv")
 df_acc['Hour'] = pd.to_datetime(df_acc['Time'], format='%H:%M:%S').dt.hour  # Hour column
 
 # Speeds dataset
 import json
 # Read the JSON file
-with open(r"C:\Users\Aman\Downloads\speeds.json", 'r') as f:
+with open(r"C:\Traffic_Data_DM\traffic_project_data\speeds.json", 'r') as f:
     data = json.load(f)
 # Convert to DataFrame
 speeds = json_to_csv(data)
 
+@app.route('/traffic-analysis', methods=['GET','POST'])
+def traffic_analysis():
+    dashboard = traffic(df, df_acc)
+    return dashboard
 
 @app.route("/street_analysis", methods=["GET"])
 def street_analysis():
-    street = request.args.get("street")
+    street = request.args.get("street")     #fetch street name from req
 
     if not street:
         return jsonify({"error": "Street name required"}), 400
 
+    # filter the datasets for the input street, so processing kum ho jayega
     street_data = df[df["street"].str.upper() == street.upper()]  # Case insensitive            # Volume data
     street_acc = df_acc[df_acc["Street Name"].str.upper() == street.upper()]        # Accidents data
     street_speed = speeds[speeds["street_name"].str.upper() == street.upper()]        # Speeds dataset (Tom Tom august 24)
