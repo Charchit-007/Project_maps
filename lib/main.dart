@@ -92,7 +92,7 @@ class _MapsPageState extends State<MapsPage> {
   List<Marker> _accidentMarkers = [];
 
   Map<LatLng, Color> _streetTraffic =
-      {}; // 🔥 Add this line to store traffic colors
+      {}; // Add this line to store traffic colors
 
   double? _futureTrafficChange; // Store traffic change
 
@@ -173,7 +173,12 @@ Widget _buildPredictionBox() {
   
 
   Future<void> _fetchRouteTraffic() async {
-    if (_routePoints.isEmpty) return;
+   if (_routePoints.isEmpty) {
+    print("No route points found!");
+    return;
+  }
+
+    print("Fetching traffic for route: $_routePoints");
 
     final List<Map<String, double>> routePointsData = _routePoints.map((point) {
       return {"latitude": point.latitude, "longitude": point.longitude};
@@ -250,7 +255,7 @@ Widget _buildPredictionBox() {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
-      print("200. will fetch and show");
+      print("Received data: ${data.length} streets");
 
       setState(() {
         for (var item in data) {
@@ -270,6 +275,7 @@ Widget _buildPredictionBox() {
           }
 
           _streetTraffic[streetLocation] = trafficColor;
+          _showTraffic = true;
         }
       });
     } else {
@@ -623,48 +629,49 @@ Widget _buildPredictionBox() {
     );
   }
 
-  Widget _buildMapOptionsMenu() {
-    return Positioned(
-      right: 16,
-      top: 16,
-      child: Card(
-        child: PopupMenuButton<String>(
-          icon: const Icon(Icons.layers),
-          onSelected: (String value) {
-            setState(() async {
-              switch (value) {
-                case 'traffic':
-                  _showTraffic = !_showTraffic;
-                  break;
-                case 'heatmap':
-                  _showHeatmap = !_showHeatmap;
-                  if (_showTraffic) {
-                    await _fetchAllTrafficPredictions(); // Fetch all trained street traffic
-                  } else {
-                    setState(() {
-                      _streetTraffic.clear(); // Clear traffic when toggled OFF
-                    });
-                  }
-                  break;
-              }
+Widget _buildMapOptionsMenu() {
+  return Positioned(
+    right: 16,
+    top: 16,
+    child: Card(
+      child: PopupMenuButton<String>(
+        icon: const Icon(Icons.layers),
+        onSelected: (String value) async {
+          if (value == 'traffic') {
+            setState(() {
+              _showTraffic = !_showTraffic;
             });
-          },
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            CheckedPopupMenuItem<String>(
-              value: 'traffic',
-              checked: _showTraffic,
-              child: const Text('Show Traffic'),
-            ),
-            CheckedPopupMenuItem<String>(
-              value: 'heatmap',
-              checked: _showHeatmap,
-              child: const Text('Show Accident Heatmap'),
-            ),
-          ],
-        ),
+
+            if (_showTraffic) {
+              await _fetchAllTrafficPredictions(); // Fetch predictions outside setState()
+            } else {
+              setState(() {
+                _streetTraffic.clear(); // Clear traffic when toggled OFF
+              });
+            }
+          } else if (value == 'heatmap') {
+            setState(() {
+              _showHeatmap = !_showHeatmap;
+            });
+          }
+        },
+        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+          CheckedPopupMenuItem<String>(
+            value: 'traffic',
+            checked: _showTraffic,
+            child: const Text('Show Traffic'),
+          ),
+          CheckedPopupMenuItem<String>(
+            value: 'heatmap',
+            checked: _showHeatmap,
+            child: const Text('Show Accident Heatmap'),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Future<void> _loadRoute() async {
     if (_origin == null || _destination == null) {
