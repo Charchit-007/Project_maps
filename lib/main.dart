@@ -9,12 +9,10 @@ import 'dashboard.dart';
 
 void main() {
   runApp(MaterialApp(
-    home:const DashboardPage(),
+    home: const DashboardPage(),
     debugShowCheckedModeBanner: false,
-    
   ));
   // runApp(const OpenStreetMapRouteApp());
-
 }
 
 class OpenStreetMapRouteApp extends StatelessWidget {
@@ -98,42 +96,43 @@ class _MapsPageState extends State<MapsPage> {
 
   // Initial center set to Manhattan, New York
   final LatLng _manhattanCenter = const LatLng(40.7831, -73.9712);
+  final MapController _mapController = MapController();
 
   bool _showRouteSearch =
       false; // New state variable to track which search to show
 
-Widget _buildPredictionBox() {
-  if (_futureTrafficChange == null) return const SizedBox.shrink();
+  Widget _buildPredictionBox() {
+    if (_futureTrafficChange == null) return const SizedBox.shrink();
 
-  return Positioned(
-    top: 80, // Below the search bar
-    right: 16, // Aligned to the right
-    child: Card(
-      color: Colors.white,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min, // Only take up needed width
-          children: [
-            const Icon(
-              Icons.timeline,
-              size: 20,
-              color: Colors.blue,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "Traffic in 30 min: ${_futureTrafficChange!.toStringAsFixed(2)}%",
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+    return Positioned(
+      top: 80, // Below the search bar
+      right: 16, // Aligned to the right
+      child: Card(
+        color: Colors.white,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min, // Only take up needed width
+            children: [
+              const Icon(
+                Icons.timeline,
+                size: 20,
+                color: Colors.blue,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                "Traffic in 30 min: ${_futureTrafficChange!.toStringAsFixed(2)}%",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   void initState() {
@@ -170,7 +169,6 @@ Widget _buildPredictionBox() {
       // Silent failure for search suggestions
     }
   }
-  
 
   Future<void> _fetchRouteTraffic() async {
     if (_routePoints.isEmpty) return;
@@ -528,7 +526,6 @@ Widget _buildPredictionBox() {
               ],
             ),
           ),
-          
         ],
       ),
     );
@@ -701,7 +698,6 @@ Widget _buildPredictionBox() {
             'duration': route['duration'],
           };
 
-         
           _generateAccidentMarkers();
         });
       } else {
@@ -789,6 +785,9 @@ Widget _buildPredictionBox() {
                     _origin = LatLng(lat, lon);
                     _originController.text = displayName;
                     _originSuggestions.clear();
+                    _mapController.move(
+                        LatLng(lat, lon), _mapController.camera.zoom);
+
                     // _showOriginLocationDetails(suggestion);
                   } else {
                     _destination = LatLng(lat, lon);
@@ -900,6 +899,7 @@ Widget _buildPredictionBox() {
               child: Stack(
                 children: [
                   FlutterMap(
+                    mapController: _mapController,
                     options: MapOptions(
                       initialCenter: _manhattanCenter,
                       initialZoom: 12.0,
@@ -967,9 +967,7 @@ Widget _buildPredictionBox() {
                   ),
                   _buildMapOptionsMenu(),
                   _buildSidebar(),
-                  
                   _buildPredictionBox(),
-                  
                   if (_isLoading)
                     const Center(
                       child: CircularProgressIndicator(),
@@ -981,35 +979,33 @@ Widget _buildPredictionBox() {
         ),
       ]),
       floatingActionButton: _showRouteSearch
-    ? FloatingActionButton(
-        onPressed: () async {
-          try {
-            // First load the route
-            await _loadRoute();
-            
-            if (_routePoints.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("No route available!")),
-              );
-              return;
-            }
+          ? FloatingActionButton(
+              onPressed: () async {
+                try {
+                  // First load the route
+                  await _loadRoute();
 
-            
-            // Now fetch both current and future traffic data
-            await Future.wait([
-              _fetchRouteTraffic(),
-              _fetchFutureTrafficChange(),
-            ]);
+                  if (_routePoints.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("No route available!")),
+                    );
+                    return;
+                  }
 
-          } catch (e) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Error loading traffic data: $e")),
-            );
-          }
-        },
-        child: const Icon(Icons.directions),
-      )
-    : null,
+                  // Now fetch both current and future traffic data
+                  await Future.wait([
+                    _fetchRouteTraffic(),
+                    _fetchFutureTrafficChange(),
+                  ]);
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error loading traffic data: $e")),
+                  );
+                }
+              },
+              child: const Icon(Icons.directions),
+            )
+          : null,
     );
   }
 }
