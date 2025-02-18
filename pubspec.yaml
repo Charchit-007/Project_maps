@@ -37,11 +37,11 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   flutter_map_heatmap: ^0.0.7
-  fl_chart: ^0.70.2
+  fl_chart: 0.65.0
   shimmer: ^3.0.0
   google_fonts: ^6.2.1
   animated_flip_counter: ^0.3.4
-  lottie: ^3.3.1
+  lottie: ^3.2.0
 
 dev_dependencies:
   flutter_test:
@@ -71,8 +71,9 @@ flutter:
     - assets/risk_areas.json
     - assets/heatmap_data.json
     - assets/accident_zones.geojson
-    - assets/img1.jpg
     - assets/nyc_accident_hotspots.json
+    - assets/img1.jpg
+    - assets/img1.jpg
 
 
   #   - images/a_dot_burr.jpeg
