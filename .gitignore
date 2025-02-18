@@ -44,3 +44,4 @@ app.*.map.json
 
 model/traffic_model.pkl
 model/volume_dataset.csv
+Analysis/paths.py

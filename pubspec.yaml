@@ -38,6 +38,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_map_heatmap: ^0.0.7
   fl_chart: 0.65.0 
+=======
+  fl_chart: ^0.70.2
+  shimmer: ^3.0.0
+  google_fonts: ^6.2.1
+  animated_flip_counter: ^0.3.4
+  lottie: ^3.3.1
+>>>>>>> 0f67720d3e119896d063d96488cfc79fb3e0f45f
 
 dev_dependencies:
   flutter_test:
