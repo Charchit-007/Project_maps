@@ -8,7 +8,11 @@ import 'input.dart';
 import 'dashboard.dart';
 
 void main() {
-  runApp(MaterialApp(home:const DashboardPage()));
+  runApp(MaterialApp(
+    home:const DashboardPage(),
+    debugShowCheckedModeBanner: false,
+    
+  ));
   // runApp(const OpenStreetMapRouteApp());
 
 }
@@ -246,6 +250,7 @@ Widget _buildPredictionBox() {
 
     if (response.statusCode == 200) {
       final List<dynamic> data = json.decode(response.body);
+      print("200. will fetch and show");
 
       setState(() {
         for (var item in data) {
@@ -992,7 +997,7 @@ Widget _buildPredictionBox() {
             
             // Now fetch both current and future traffic data
             await Future.wait([
-              
+              _fetchRouteTraffic(),
               _fetchFutureTrafficChange(),
             ]);
 

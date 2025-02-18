@@ -17,17 +17,26 @@ from json_read import json_to_csv
 from peak import peak_hour_func
 matplotlib.use('Agg')  # Use a non-GUI backend
 
+from paths import (
+    VOLUME_DATA_PATH,
+    TRAFFIC_MODEL_PATH,
+    VOLUME_DATASET_PATH,
+    ACCIDENT_DATA_PATH,
+    SPEEDS_DATA_PATH
+)
+
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Volume data
-df = pd.read_csv(r"C:\Traffic_Data_DM\traffic_project_data\Automated_Traffic_Volume_Counts_20250127.csv")
+df = pd.read_csv(VOLUME_DATA_PATH)
 # Load trained model
-model = ""
+model = joblib.load(TRAFFIC_MODEL_PATH)
+
 
 # Load dataset
-vdf = pd.read_csv(r"C:\Traffic_Data_DM\traffic_project_data\Automated_Traffic_Volume_Counts_20250127.csv")
+vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
 
 df['Yr'] = df['Yr'].astype(str)
 df['M'] = df['M'].astype(str)
@@ -36,13 +45,13 @@ df['D'] = df['D'].astype(str)
 df['date'] = df[['Yr', 'M', 'D']].agg('-'.join, axis=1)
 
 # Accident data
-df_acc = pd.read_csv(r"C:\Traffic_Data_DM\traffic_project_data\NYC_Collisions\NYC_Collisions.csv")
+df_acc = pd.read_csv(ACCIDENT_DATA_PATH)
 df_acc['Hour'] = pd.to_datetime(df_acc['Time'], format='%H:%M:%S').dt.hour  # Hour column
 
 # Speeds dataset
 import json
 # Read the JSON file
-with open(r"C:\Traffic_Data_DM\traffic_project_data\speeds.json", 'r') as f:
+with open(SPEEDS_DATA_PATH, 'r') as f:
     data = json.load(f)
 # Convert to DataFrame
 speeds = json_to_csv(data)
@@ -360,10 +369,10 @@ def street_analysis():
 # CORS(app)
 
 # # Load trained model
-# model = joblib.load(r"C:\DM Project\traffic_model.pkl")
+# model = joblib.load(TRAFFIC_MODEL_PATH)
 
 # # Load dataset
-# vdf = pd.read_csv(r"C:\DM Project\volume_dataset.csv")
+# vdf = pd.read_csv(VOLUME_DATASET_PATH)
 
 # Function to predict traffic without weather data
 # def predict_traffic(lat, lon, hour, minute):
