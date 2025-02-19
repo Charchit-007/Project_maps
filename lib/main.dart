@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'input.dart';
 import 'dashboard.dart';
+import 'dart:async';
 
 void main() {
   runApp(MaterialApp(
@@ -63,6 +64,7 @@ class MapsPage extends StatefulWidget {
 final TextEditingController _searchController = TextEditingController();
 
 class _MapsPageState extends State<MapsPage> {
+  Timer? _debounceTimer; //delays api calls
   LatLng? _origin;
   LatLng? _destination;
   List<LatLng> _routePoints = [];
@@ -141,81 +143,140 @@ class _MapsPageState extends State<MapsPage> {
     _fetchAllTrafficPredictions();
   }
 
+  @override
+  void dispose() {
+     _debounceTimer?.cancel();
+    super.dispose();
+  }
+
   Future<void> _searchLocation(String query, bool isOrigin) async {
-    if (query.isEmpty) return;
+    if (_debounceTimer != null) {
+      _debounceTimer!.cancel(); // Cancel the previous timer if still running
+    }
+
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () async {
+      if (query.isEmpty) return;
+
+      try {
+        final response = await http.get(Uri.parse(
+            'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5'));
+
+        if (response.statusCode == 200) {
+          final List<dynamic> data = json.decode(response.body);
+
+          setState(() {
+            if (isOrigin) {
+              _originSuggestions = data;
+            } else {
+              _destinationSuggestions = data;
+            }
+          });
+        }
+      } catch (e) {
+        print("Error fetching location suggestions: $e");
+      }
+    });
+  }
+
+  // Future<void> _fetchRouteTraffic() async {
+  //  if (_routePoints.isEmpty) {
+  //   print("No route points found!");
+  //   return;
+  // }
+
+  //   print("Fetching traffic for route: $_routePoints");
+
+  //   final List<Map<String, double>> routePointsData = _routePoints.map((point) {
+  //     return {"latitude": point.latitude, "longitude": point.longitude};
+  //   }).toList();
+
+  //   final response = await http.post(
+  //     Uri.parse("http://localhost:5000/predict_route"),
+  //     headers: {"Content-Type": "application/json"},
+  //     body: jsonEncode({"route_points": routePointsData}),
+  //   );
+
+  //   if (response.statusCode == 200) {
+  //     final List<dynamic> data = json.decode(response.body);
+  //     print("Received route traffic data: ${data.length} points");
+
+  //     setState(() {
+  //       _streetTraffic.clear();
+  //       for (var item in data) {
+  //         LatLng point = LatLng(item["latitude"], item["longitude"]);
+  //         Color color;
+
+  //         switch (item["traffic_color"]) {
+  //           case "red":
+  //             color = Colors.red;
+  //             break;
+  //           case "yellow":
+  //             color = Colors.yellow;
+  //             break;
+  //           default:
+  //             color = Colors.green;
+  //             break;
+  //         }
+
+  //         _streetTraffic[point] = color;
+  //       }
+
+  //       _showTraffic = true;
+  //     });
+  //   } else {
+  //     print("Error fetching route traffic");
+  //   }
+  // }
+
+  Future<void> _fetchRouteTraffic() async {
+    if (_routePoints.isEmpty) {
+      print("No route points found!");
+      return;
+    }
 
     try {
-      final response = await http.get(Uri.parse(
-          'https://nominatim.openstreetmap.org/search?q=$query&format=json&addressdetails=1&limit=5'));
+      final List<Map<String, double>> routePointsData =
+          _routePoints.map((point) {
+        return {"latitude": point.latitude, "longitude": point.longitude};
+      }).toList();
+
+      final response = await http.post(
+        Uri.parse("http://localhost:5000/predict_route"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"route_points": routePointsData}),
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          if (isOrigin) {
-            _originSuggestions = data;
-          } else {
-            _destinationSuggestions = data;
-          }
+        print("Received route traffic data: ${data.length} points");
 
-          if (data.isNotEmpty) {
-            final address = data[0]['address'] as Map<String, dynamic>;
-            final streetName = address['road']; // Extracting the street name
-            print(
-                'Street Name: $streetName'); // This will print the street name
+        setState(() {
+          _streetTraffic.clear();
+          for (var i = 0; i < data.length; i++) {
+            Color color;
+
+            switch (data[i]["traffic_color"]) {
+              case "red":
+                color = Colors.red.withValues(alpha: 0.7);
+                break;
+              case "yellow":
+                color = Colors.yellow.withValues(alpha: 0.7);
+                break;
+              default:
+                color = Colors.green.withValues(alpha: 0.7);
+                break;
+            }
+
+            // Store each segment of the route instead of just single points
+            if (i < _routePoints.length - 1) {
+              _streetTraffic[_routePoints[i]] = color;
+            }
           }
+          _showTraffic = true;
         });
       }
     } catch (e) {
-      // Silent failure for search suggestions
-    }
-  }
-
-  Future<void> _fetchRouteTraffic() async {
-   if (_routePoints.isEmpty) {
-    print("No route points found!");
-    return;
-  }
-
-    print("Fetching traffic for route: $_routePoints");
-
-    final List<Map<String, double>> routePointsData = _routePoints.map((point) {
-      return {"latitude": point.latitude, "longitude": point.longitude};
-    }).toList();
-
-    final response = await http.post(
-      Uri.parse("http://localhost:5000/predict_route"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"route_points": routePointsData}),
-    );
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-
-      setState(() {
-        _streetTraffic.clear();
-        for (var item in data) {
-          LatLng point = LatLng(item["latitude"], item["longitude"]);
-          Color color;
-
-          switch (item["traffic_color"]) {
-            case "red":
-              color = Colors.red;
-              break;
-            case "yellow":
-              color = Colors.yellow;
-              break;
-            default:
-              color = Colors.green;
-              break;
-          }
-
-          _streetTraffic[point] = color;
-        }
-
-        _showTraffic = true;
-      });
-    } else {
-      print("Error fetching route traffic");
+      print("Error fetching route traffic: $e");
     }
   }
 
@@ -256,6 +317,7 @@ class _MapsPageState extends State<MapsPage> {
       print("Received data: ${data.length} streets");
 
       setState(() {
+        _streetTraffic.clear();
         for (var item in data) {
           LatLng streetLocation = LatLng(item["latitude"], item["longitude"]);
           Color trafficColor;
@@ -273,8 +335,8 @@ class _MapsPageState extends State<MapsPage> {
           }
 
           _streetTraffic[streetLocation] = trafficColor;
-          _showTraffic = true;
         }
+        _showTraffic = true;
       });
     } else {
       print("Error fetching traffic predictions");
@@ -626,49 +688,44 @@ class _MapsPageState extends State<MapsPage> {
     );
   }
 
-Widget _buildMapOptionsMenu() {
-  return Positioned(
-    right: 16,
-    top: 16,
-    child: Card(
-      child: PopupMenuButton<String>(
-        icon: const Icon(Icons.layers),
-        onSelected: (String value) async {
-          if (value == 'traffic') {
-            setState(() {
-              _showTraffic = !_showTraffic;
-            });
-
-            if (_showTraffic) {
-              await _fetchAllTrafficPredictions(); // Fetch predictions outside setState()
-            } else {
+  Widget _buildMapOptionsMenu() {
+    return Positioned(
+      right: 16,
+      top: 16,
+      child: Card(
+        child: PopupMenuButton<String>(
+          icon: const Icon(Icons.layers),
+          onSelected: (String value) async {
+            if (value == 'traffic') {
+              if (!_showTraffic) {
+                // Only fetch if it's not already loaded
+                await _fetchAllTrafficPredictions();
+              }
               setState(() {
-                _streetTraffic.clear(); // Clear traffic when toggled OFF
+                _showTraffic = !_showTraffic;
+              });
+            } else if (value == 'heatmap') {
+              setState(() {
+                _showHeatmap = !_showHeatmap;
               });
             }
-          } else if (value == 'heatmap') {
-            setState(() {
-              _showHeatmap = !_showHeatmap;
-            });
-          }
-        },
-        itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-          CheckedPopupMenuItem<String>(
-            value: 'traffic',
-            checked: _showTraffic,
-            child: const Text('Show Traffic'),
-          ),
-          CheckedPopupMenuItem<String>(
-            value: 'heatmap',
-            checked: _showHeatmap,
-            child: const Text('Show Accident Heatmap'),
-          ),
-        ],
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            CheckedPopupMenuItem<String>(
+              value: 'traffic',
+              checked: _showTraffic,
+              child: const Text('Show Traffic'),
+            ),
+            CheckedPopupMenuItem<String>(
+              value: 'heatmap',
+              checked: _showHeatmap,
+              child: const Text('Show Accident Heatmap'),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Future<void> _loadRoute() async {
     if (_origin == null || _destination == null) {
@@ -706,6 +763,7 @@ Widget _buildMapOptionsMenu() {
           };
 
           _generateAccidentMarkers();
+          _fetchRouteTraffic();
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -989,24 +1047,16 @@ Widget _buildMapOptionsMenu() {
           ? FloatingActionButton(
               onPressed: () async {
                 try {
-                  // First load the route
                   await _loadRoute();
-
-                  if (_routePoints.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("No route available!")),
-                    );
-                    return;
+                  if (_routePoints.isNotEmpty) {
+                    await Future.wait([
+                      _fetchRouteTraffic(),
+                      _fetchFutureTrafficChange(),
+                    ]);
                   }
-
-                  // Now fetch both current and future traffic data
-                  await Future.wait([
-                    _fetchRouteTraffic(),
-                    _fetchFutureTrafficChange(),
-                  ]);
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error loading traffic data: $e")),
+                    SnackBar(content: Text("Error: $e")),
                   );
                 }
               },

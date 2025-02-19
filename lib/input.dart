@@ -663,77 +663,7 @@ class AnalysisResultWidget extends StatelessWidget {
     );
   }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Expanded(
-//         child: Column(children: [
-//       Text(
-//         "${data['street_name']}",
-//         style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-//       ), //data['most_congested_hour']['street'][0] didnt work for some reason, idk why
-//       Flexible(
-//           child: SingleChildScrollView(
-//         child: Center(child:Column(
-//           children: [
-//             SizedBox(
-//               height: 8,
-//             ),
-//             Wrap(children: [
-//               Row(children:[
-//                 _Stats(
-//                 title: "Most Congested Hour",
-//                 value: data['most_congested_hour']['idxmax'],
-//                 volume: data['most_congested_hour']['max'],
-//               ),
-//               SizedBox(width: 50,),
-//               _Stats(
-//                   title: "Least Congested Hour",
-//                   value: data['least_congested_hour']['idxmin'],
-//                   volume: data['least_congested_hour']['min']),
-//               // Text("${data['boro_volume']['Boro']} has an average volume of : ${data['boro_volume']['Vol']}")
-//               ]),
-//               SizedBox(
-//                 height: 400,
-//                 width: 600,
-//                 child: Image.memory(base64Decode(data["hour_plot"])),
-//               ),
-//               SizedBox(width: 50,),
-//               SizedBox(
-//                 height: 400,
-//                 width: 600,
-//                 child: Image.memory(base64Decode(data["accidents"])),
-//               ),
-//               SizedBox(width: 50,),
-//               SizedBox(
-//                 height: 400,
-//                 width: 600,
-//                 child: Image.memory(base64Decode(data["vehicle_types"])),
-//               ),
-//             ]),
-//             // Text(
-//             //     "Most Congested Hour: ${data['most_congested_hour']['idxmax']} (Volume: ${data['most_congested_hour']['max']})",
-//             //     style: const TextStyle(
-//             //       fontSize: 20,
-//             //     )), // fetching max and all from a dictionary
-//             // Text(
-//             //     "Least Congested Hour: ${data['least_congested_hour']['idxmin']} (Volume: ${data['least_congested_hour']['min']})",
-//             //     style: const TextStyle(
-//             //       fontSize: 20,
-//             //     )),
-//             SizedBox(height: 10),
-//             // Text("Traffic Volume per Hour:"),
-//             // for (var entry in data['hourly_volume'])
-//             //   Text("Hour ${entry['HH']}: ${entry['Vol']}"),
-//             // SizedBox(height: 10),
-//             // Text("Yearly Trend (Mean & Std Dev):"),
-//             // for (var entry in data['yearly_trend'])
-//             //   Text("Year ${entry['Yr']}: Mean=${entry['mean']}, Std=${entry['std']}"),
-//           ],
-//         ),)
-//       ))
-//     ]));
-//   }
-// }
+
 
   @override
   Widget build(BuildContext context) {
@@ -793,7 +723,8 @@ class AnalysisResultWidget extends StatelessWidget {
                     ),
                     _buildSectionTitle(
                         "Correlation Analysis", Icon(Icons.grain_sharp)),
-                    _buildCorrelationAnalysis(),  
+                    _buildCorrelationAnalysis(), 
+                    _buildTrendAnalysis(), 
                   ],
                 ),
               ),
