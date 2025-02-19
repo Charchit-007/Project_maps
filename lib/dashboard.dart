@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
-import 'package:google_fonts/google_fonts.dart';
-import 'package:shimmer/shimmer.dart';
-import 'package:animated_flip_counter/animated_flip_counter.dart';
-import 'package:lottie/lottie.dart';
 import 'dart:convert';
-
-import 'main.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -16,73 +10,140 @@ class DashboardPage extends StatefulWidget {
   _DashboardPageState createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> with SingleTickerProviderStateMixin {
+class _DashboardPageState extends State<DashboardPage> {
   Map<String, dynamic>? trafficData;
-  late AnimationController _animationController;
   bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    );
     fetchTrafficData();
   }
 
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
+  // Fetch traffic data with timeout and log request time
   Future<void> fetchTrafficData() async {
+    // final startTime = DateTime.now();
+
     try {
       final response = await http
-          .get(Uri.parse('http://localhost:5000/traffic-analysis'))
-          .timeout(const Duration(seconds: 30));
+          .get(Uri.parse('http://127.0.0.1:5000/traffic-analysis'))
+          .timeout(const Duration(seconds: 60));
 
-      if (response.statusCode == 200) {
+      // final endTime = DateTime.now();
+      // print('Request Time: ${endTime.difference(startTime).inMilliseconds} ms');
+
+      if (response.statusCode == 200) {   // agar response succesfullhai, status 200 return hota hai
         setState(() {
           trafficData = json.decode(response.body);
+          // jsonify encodes karke bhejta hai, and yaha we decode the response
           isLoading = false;
-          _animationController.forward();
         });
       } else {
         throw Exception('Failed to load traffic data');
       }
     } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
       print('Error fetching data: $e');
-      setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.blue[700],
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const OpenStreetMapRouteApp(),
-            ),
-          );
-        },
-        icon: const Icon(Icons.navigation),
-        label: const Text('Navigate'),
-      ),
+      backgroundColor: const Color(0xFF111826),
       body: Column(
         children: [
-          _buildHeader(),
+          // App Bar with Navigation
+          _buildAppBar(),
+          
+          // Main Content
           Expanded(
-            child: Row(
+            child: isLoading      // if data nhi aya, isloading true hoga; once data or even error aya, 'finally' wale code se isLoading false ho jayega
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF8B5CF6),
+                    ),
+                  )
+                : _buildDashboardContent(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1E293B),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 10,     // higher - increases depth effect
+            offset: Offset(0, 9),    // x, y axis with respect to the parent(container)
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.analytics_outlined,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Text(
+                "RoutEx",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              // replace with tab bar to navigate between Map and dashboard
+              // _navButton("Overview", isSelected: true),
+              // _navButton("Insights"),
+              // _navButton("Reports"),
+            ],
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1F2E),
+              borderRadius: BorderRadius.circular(50),
+              border: Border.all(color: const Color(0xFF2A3547), width: 1),
+            ),
+            child: const Row(
               children: [
-                _buildLeftPanel(),
-                _buildRightPanel(),
+                CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Color(0xFF8B5CF6),
+                  child: Icon(Icons.person, color: Colors.white, size: 18),
+                ),
+                SizedBox(width: 8),
+                Text(
+                  "Admin",
+                  style: TextStyle(color: Colors.white),
+                ),
+                SizedBox(width: 8),
+                Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 18),
               ],
             ),
           ),
@@ -91,358 +152,757 @@ class _DashboardPageState extends State<DashboardPage> with SingleTickerProvider
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            "Traffic Analytics Dashboard",
-            style: GoogleFonts.poppins(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          _buildStatusWidget(),
-        ],
-      ),
-    );
-  }
+  // Widget _navButton(String title, {bool isSelected = false}) {
+  //   return Container(
+  //     margin: const EdgeInsets.symmetric(horizontal: 8),
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //     decoration: BoxDecoration(
+  //       color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
+  //       borderRadius: BorderRadius.circular(8),
+  //     ),
+  //     child: Text(
+  //       title,
+  //       style: TextStyle(
+  //         color: isSelected ? Colors.white : Colors.white70,
+  //         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _buildStatusWidget() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.green.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: Colors.green,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            "Live Updates",
-            style: GoogleFonts.poppins(
-              color: Colors.green,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeftPanel() {
-    return Expanded(
-      flex: 3,
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F3460),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: isLoading
-            ? _buildShimmerLoading()
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildChartSection(
-                      "Borough-wise Volume Analysis",
-                      trafficData!['Borough-wise Congestion'],
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF2E93fA), Color(0xFF66B2FF)],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _buildChartSection(
-                      "Peak Traffic Hours",
-                      trafficData!['Hourly Traffic Volume'],
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFF9D423), Color(0xFFFF4E50)],
-                      ),
-                    ),
-                    _buildAnalysisSections(),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildShimmerLoading() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[850]!,
-      highlightColor: Colors.grey[800]!,
-      child: Column(
-        children: List.generate(
-          3,
-          (index) => Container(
-            height: 200,
-            margin: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChartSection(String title, Map<String, dynamic> data, {required Gradient gradient}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E30),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 300,
-            child: _buildAnimatedBarChart(data, gradient),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedBarChart(Map<String, dynamic> data, Gradient gradient) {
-    final List<BarChartGroupData> barGroups = [];
-    
-    data.forEach((key, value) {
-      barGroups.add(
-        BarChartGroupData(
-          x: barGroups.length,
-          barRods: [
-            BarChartRodData(
-              toY: value.toDouble(),
-              gradient: gradient,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
-            ),
-          ],
+  Widget _buildDashboardContent() {
+    if (trafficData == null) {
+      return const Center(
+        child: Text(
+          "No data available",
+          style: TextStyle(color: Colors.white60),
         ),
       );
-    });
-
-    return BarChart(
-      BarChartData(
-        alignment: BarChartAlignment.spaceAround,
-        barGroups: barGroups,
-        gridData: FlGridData(show: false),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              getTitlesWidget: (value, _) => Text(
-                value.toInt().toString(),
-                style: const TextStyle(color: Colors.white70, fontSize: 12),
-              ),
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, _) => Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  data.keys.toList()[value.toInt()],
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ),
-            ),
-          ),
-          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        borderData: FlBorderData(show: false),
-        backgroundColor: Colors.transparent,
-      ),
-    );
-  }
-
-  Widget _buildAnalysisSections() {
-    return Column(
+    }
+    // if data not empty ->
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildAnalysisCard(
-          "Traffic Patterns",
-          trafficData!['Traffic by 3-Hour Intervals'],
-          Icons.timeline,
+        // Main Content Area (70%)
+        Expanded(
+          // diff between expanded and flexible is
+          // flexible lets child take how much ever space they need
+          // expanded forces child to take all avail width
+          flex: 5,    // how much space it should take, with resp to its siblings
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildBoroughSummary(),
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: "Borough-wise Traffic Analysis",
+                  child: _buildBarChartCard(trafficData!['Borough-wise Congestion']),
+                ),
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: "Peak Traffic Hours",
+                  child: _buildBarChartCard(trafficData!['Hourly Traffic Volume']),
+                ),
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: "Traffic by 3-Hour Intervals",
+                  child: _buildBoroughIntervalCharts(),
+                ),
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: "Most Common Causes of Accidents",
+                  child: _buildAnalysisCard(trafficData!['Most Common Causes of Accidents']),
+                ),
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: "Accidents by Vehicle Type",
+                  child: _buildAnalysisCard(trafficData!['Accidents by Vehicle Type']),
+                ),
+              ],
+            ),
+          ),
         ),
-        _buildAnalysisCard(
-          "High-Risk Areas",
-          trafficData!['Top 10 Dangerous Streets'],
-          Icons.warning_amber_rounded,
-        ),
-        _buildAnalysisCard(
-          "Accident Causes",
-          trafficData!['Most Common Causes of Accidents'],
-          Icons.report_problem_outlined,
+        
+        // Right Sidebar (30%)
+        Expanded(
+          flex: 3,
+          child: Container(
+            margin: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E293B),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Danger Zones",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          "Live",
+                          style: TextStyle(
+                            color: Color(0xFF8B5CF6),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
+                    ),
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.asset(
+                          'assets/img1.jpg',
+                          fit: BoxFit.cover,
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.7),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: 16,
+                          left: 16,
+                          right: 16,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Dangerous Streets",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pushNamed(context, '/streetAnalysis');
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF8B5CF6),
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                    horizontal: 20,
+                                  ),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("Street Analysis"),
+                                    SizedBox(width: 8),
+                                    Icon(Icons.arrow_forward, size: 16),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildDangerousStreetsSection(),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
-  //img
+  Widget _buildBoroughSummary() {
+    // Extract borough data
+    final boroughData = trafficData!['boro_wise_congestion'] as Map<String, dynamic>;    // !(null assertion operator) says that the traffic data is surely NOT NULL, which avoids compile error
+    // ! use only when youa re sure data is not null
+    
+    if (boroughData.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    // Get top 3 boroughs
+    final sortedBoroughs = boroughData.entries.toList()
+      ..sort((a, b) => (b.value as num).compareTo(a.value as num));
+      // .entries converts into iterable entry with key and values --> .list converts to list
+      // as sort is avail only for list
+      // sort works in place
+    final topBoroughs = sortedBoroughs.take(3).toList();
+    
+    return Row(
+      children: topBoroughs.asMap().entries.map((entry) {
+        // this runs a loop for each item in the top boroughs list
+        final index = entry.key;
+        final borough = entry.value.key;
+        final volume = entry.value.value;
+        
+        IconData icon;
+        Color color;
+        String label;
+        
+        if (index == 0) {       // top congested
+          icon = Icons.warning_rounded;
+          color = const Color(0xFFEF4444);
+          label = "Highest Traffic";
+        } else if (index == 1) {
+          icon = Icons.warning_rounded;
+          color = const Color(0xFFF59E0B);
+          label = "Heavy Traffic";
+        } else {
+          icon = Icons.warning_rounded;
+          color = const Color(0xFF10B981);
+          label = "Moderate Traffic";
+        }
+        
+        return _buildMetricCard(
+          title: borough,
+          value: volume.toString(),
+          subtext: label,
+          icon: icon,
+          color: color,
+        );
+      }).toList(),
+    );
+  }
 
-  Widget _buildAnalysisCard(String title, dynamic data, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E30),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+  Widget _buildMetricCard({
+    required String title,
+    required String value,
+    String? change,
+    bool isPositive = false,
+    required String subtext,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.only(right: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 18,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtext,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+            if (change != null)
+              Row(
+                children: [
+                  Icon(
+                    isPositive
+                        ? Icons.arrow_upward_rounded
+                        : Icons.arrow_downward_rounded,
+                    color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    change,
+                    style: TextStyle(
+                      color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSection({required String title, required Widget child}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ],
+        ),
+        child,
+      ],
+    );
+  }
+
+  Widget _buildBarChartCard(Map<String, dynamic>? data) {
+    if (data == null || data.isEmpty) {
+      return _buildEmptyCard("No chart data available");
+    }
+
+    List<BarChartGroupData> barGroups = [];
+    List<String> titles = [];
+
+    // Find the maximum value for scaling
+    double maxValue = 0;
+    data.forEach((key, value) {
+      if ((value as num).toDouble() > maxValue) {
+        maxValue = (value as num).toDouble();
+      }
+    });
+
+    int index = 0;
+    data.forEach((key, value) {
+      titles.add(key);
+      barGroups.add(
+        BarChartGroupData(
+          x: index,
+          barRods: [
+            BarChartRodData(
+              toY: (value as num).toDouble(),
+              color: const Color(0xFF8B5CF6),
+              width: 16,
+              borderRadius: BorderRadius.circular(2),
+              backDrawRodData: BackgroundBarChartRodData(
+                show: true,
+                toY: maxValue * 1.1, // Add 10% padding at the top
+                color: const Color(0xFF2D3748),
+              ),
+            )
+          ],
+        ),
+      );
+      index++;
+    });
+
+    return Container(
+      height: 350,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: Colors.blue[300], size: 24),
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
+              const Text(
+                "Current Analysis",
+                style: TextStyle(
+                  color: Colors.white70,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
-            ],
-          ),
-          const Divider(color: Colors.white24),
-          _buildAnalysisContent(data),
-        ],
-      ),
-    );
-  }
-
-  //trafficData
-
-  Widget _buildAnalysisContent(dynamic data) {
-    if (data is Map) {
-      return Column(
-        children: data.entries.map((entry) => _buildDataRow(entry.key, entry.value)).toList(),
-      );
-    } else if (data is List) {
-      return Column(
-        children: data.asMap().entries.map((entry) => 
-          _buildDataRow("${entry.key + 1}", entry.value.toString())
-        ).toList(),
-      );
-    }
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildDataRow(String key, dynamic value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              key,
-              style: const TextStyle(color: Colors.white70),
-            ),
-          ),
-          Text(
-            value.toString(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRightPanel() {
-    return Expanded(
-      flex: 2,
-      child: Container(
-        margin: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0F3460),
-          borderRadius: BorderRadius.circular(16),
-          image: const DecorationImage(
-            image: AssetImage('assets/img1.jpg'),
-            fit: BoxFit.cover,
-            opacity: 0.7,
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Add map overlay elements here
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.all(8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
+                  color: const Color(0xFF111826),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.location_on, color: Colors.red),
-                    SizedBox(width: 8),
                     Text(
-                      "Live Traffic",
-                      style: TextStyle(color: Colors.white),
+                      "Today",
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(
+                      Icons.keyboard_arrow_down,
+                      color: Colors.white70,
+                      size: 16,
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 30),
+          Expanded(
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                barGroups: barGroups,
+                maxY: maxValue * 1.1, // Add 10% padding at the top
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: const Color(0xFF2D3748),
+                    strokeWidth: 1,
+                    dashArray: [5, 5],
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                titlesData: FlTitlesData(
+                  show: true,
+                  topTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value >= titles.length || value < 0) {
+                          return const SizedBox();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            titles[value.toInt()],
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          '${value.toInt()}',
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                backgroundColor: Colors.transparent,
+              ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBoroughIntervalCharts() {
+    final intervalGraphsData = trafficData!['Traffic by 3-Hour Intervals Graphs'] as Map<String, dynamic>;
+    
+    if (intervalGraphsData.isEmpty) {
+      return _buildEmptyCard("No interval data available");
+    }
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: intervalGraphsData.entries.map((entry) {
+          final borough = entry.key;
+          final base64Image = entry.value;
+          
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.location_on,
+                      color: Color(0xFF8B5CF6),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      borough,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.memory(
+                  base64Decode(base64Image),
+                  height: 200,
+                  width: double.infinity,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const Divider(color: Color(0xFF2D3748), height: 32),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildAnalysisCard(Map<String, dynamic>? data) {
+    if (data == null || data.isEmpty) {
+      return _buildEmptyCard("No analysis data available");
+    }
+
+    List<Map<String, dynamic>> items = [];
+    data.forEach((key, value) {
+      items.add({
+        'name': key,
+        'value': value,
+      });
+    });
+
+    // Sort by value for better visualization
+    items.sort((a, b) => (b['value'] as num).compareTo(a['value'] as num));
+    
+    // Take top 5 items for cleaner display
+    final displayItems = items.take(5).toList();
+    
+    // Calculate max value for percentage calculation
+    final maxValue = displayItems.first['value'] as num;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...displayItems.map((item) => _buildAnalysisItem(
+                item['name'],
+                item['value'].toString(),
+                (item['value'] as num) / maxValue,
+                displayItems.indexOf(item),
+              )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalysisItem(String name, String value, double percentage, int index) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  maxLines: 1,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: percentage,
+              minHeight: 8,
+              backgroundColor: const Color(0xFF2D3748),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                index == 0
+                    ? const Color(0xFF8B5CF6)
+                    : index < 3
+                        ? const Color(0xFF60A5FA)
+                        : const Color(0xFF94A3B8),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDangerousStreetsSection() {
+    final dangerousStreetsData = trafficData!['Top 5 Dangerous Streets Graphs'] as Map<String, dynamic>;
+    
+    if (dangerousStreetsData.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Text(
+              "Top Dangerous Streets",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          Expanded(
+            child: DefaultTabController(
+              length: dangerousStreetsData.length,
+              child: Column(
+                children: [
+                  TabBar(
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    dividerColor: Colors.transparent,
+                    labelColor: const Color(0xFF8B5CF6),
+                    unselectedLabelColor: Colors.white60,
+                    indicatorColor: const Color(0xFF8B5CF6),
+                    tabs: dangerousStreetsData.keys.map((borough) => 
+                      Tab(text: borough)
+                    ).toList(),
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      children: dangerousStreetsData.entries.map((entry) {
+                        final borough = entry.key;
+                        final base64Image = entry.value;
+                        
+                        return Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(
+                              base64Decode(base64Image),
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCard(String message) {
+    return Container(
+      height: 200,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Text(
+          message,
+          style: const TextStyle(color: Colors.white60),
         ),
       ),
     );
