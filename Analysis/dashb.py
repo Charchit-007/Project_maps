@@ -100,7 +100,7 @@ def traffic(df, df_acc):
         logging.debug("Data processing complete.")
 
         return jsonify({
-            "boro_wise_congestion": boro_congestion,
+            "Borough-wise Congestion": boro_congestion,
             "Hourly Traffic Volume": hourly_traffic,
             "Traffic by 3-Hour Intervals": boro_hourly_traffic,
             "Traffic by 3-Hour Intervals Graphs": boro_hourly_graphs,
