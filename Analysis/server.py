@@ -407,6 +407,8 @@ def predict_traffic(lat, lon, hour, minute):
         return 0 
     
 
+
+
 # Define traffic colors based on volume
 def get_traffic_color(volume):
     if volume > 100:
@@ -508,6 +510,7 @@ def predict_future():
         })
     
     return jsonify(predictions)
+
 # def predict_future():
 #     data = request.json
 #     route_points = data.get("route_points", [])
