@@ -3,12 +3,16 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:osm_route_suggestion/main.dart';
+
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
   _DashboardPageState createState() => _DashboardPageState();
 }
+
+
 
 class _DashboardPageState extends State<DashboardPage> {
   Map<String, dynamic>? trafficData;
@@ -253,7 +257,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Text(
@@ -287,7 +291,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withOpacity(0.7),
+                                Colors.black.withValues(alpha: 0.7),
                               ],
                             ),
                           ),
@@ -310,7 +314,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               const SizedBox(height: 12),
                               ElevatedButton(
                                 onPressed: () {
-                                  Navigator.pushNamed(context, '/streetAnalysis');
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) => MapsPage()));
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF8B5CF6),
@@ -442,7 +446,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
+                    color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -529,7 +533,7 @@ class _DashboardPageState extends State<DashboardPage> {
     double maxValue = 0;
     data.forEach((key, value) {
       if ((value as num).toDouble() > maxValue) {
-        maxValue = (value as num).toDouble();
+        maxValue = (value).toDouble();
       }
     });
 
@@ -774,6 +778,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+  //Street Analysis
 
   Widget _buildAnalysisItem(String name, String value, double percentage, int index) {
     return Padding(
