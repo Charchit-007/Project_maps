@@ -11,6 +11,7 @@ import 'dart:async';
 void main() {
   runApp(MaterialApp(
     home: const DashboardPage(),
+    theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
     debugShowCheckedModeBanner: false,
   ));
   // runApp(const OpenStreetMapRouteApp());
@@ -258,13 +259,13 @@ class _MapsPageState extends State<MapsPage> {
 
             switch (data[i]["traffic_color"]) {
               case "red":
-                color = Colors.red.withValues(alpha: 0.7);
+                color = Colors.red.withOpacity(0.7);
                 break;
               case "yellow":
-                color = Colors.yellow.withValues(alpha: 0.7);
+                color = Colors.yellow.withOpacity(0.7);
                 break;
               default:
-                color = Colors.green.withValues(alpha: 0.7);
+                color = Colors.green.withOpacity(0.7);
                 break;
             }
 
