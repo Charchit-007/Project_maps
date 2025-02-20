@@ -1077,7 +1077,7 @@ class _MapsPageState extends State<MapsPage> {
                                 entry.key
                               ], // Single point for each traffic location
                               strokeWidth: 8.0, // Make it more visible
-                              color: entry.value.withValues(alpha: .7), // Add some transparency
+                              color: entry.value.withOpacity(0.7), // Add some transparency
                             );
                           }).toList(),
                         ),
