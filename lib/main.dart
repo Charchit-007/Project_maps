@@ -25,7 +25,6 @@ class OpenStreetMapRouteApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: const MapsPage(),
-     
     );
   }
 }
@@ -72,6 +71,7 @@ class _MapsPageState extends State<MapsPage> {
   List<LatLng> _routePoints = [];
   bool _isLoading = false;
   bool _showTraffic = false;
+  bool _showTrafficAll = false;
   bool _showHeatmap = false;
 
   Map<String, dynamic> _routeInfo = {};
@@ -147,7 +147,7 @@ class _MapsPageState extends State<MapsPage> {
 
   @override
   void dispose() {
-     _debounceTimer?.cancel();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -180,56 +180,6 @@ class _MapsPageState extends State<MapsPage> {
     });
   }
 
-  // Future<void> _fetchRouteTraffic() async {
-  //  if (_routePoints.isEmpty) {
-  //   print("No route points found!");
-  //   return;
-  // }
-
-  //   print("Fetching traffic for route: $_routePoints");
-
-  //   final List<Map<String, double>> routePointsData = _routePoints.map((point) {
-  //     return {"latitude": point.latitude, "longitude": point.longitude};
-  //   }).toList();
-
-  //   final response = await http.post(
-  //     Uri.parse("http://localhost:5000/predict_route"),
-  //     headers: {"Content-Type": "application/json"},
-  //     body: jsonEncode({"route_points": routePointsData}),
-  //   );
-
-  //   if (response.statusCode == 200) {
-  //     final List<dynamic> data = json.decode(response.body);
-  //     print("Received route traffic data: ${data.length} points");
-
-  //     setState(() {
-  //       _streetTraffic.clear();
-  //       for (var item in data) {
-  //         LatLng point = LatLng(item["latitude"], item["longitude"]);
-  //         Color color;
-
-  //         switch (item["traffic_color"]) {
-  //           case "red":
-  //             color = Colors.red;
-  //             break;
-  //           case "yellow":
-  //             color = Colors.yellow;
-  //             break;
-  //           default:
-  //             color = Colors.green;
-  //             break;
-  //         }
-
-  //         _streetTraffic[point] = color;
-  //       }
-
-  //       _showTraffic = true;
-  //     });
-  //   } else {
-  //     print("Error fetching route traffic");
-  //   }
-  // }
-
   Future<void> _fetchRouteTraffic() async {
     if (_routePoints.isEmpty) {
       print("No route points found!");
@@ -254,9 +204,8 @@ class _MapsPageState extends State<MapsPage> {
 
         setState(() {
           _streetTraffic.clear();
-          for (var i = 0; i < data.length; i++) {
+          for (var i = 0; i < data.length - 1; i++) {
             Color color;
-
             switch (data[i]["traffic_color"]) {
               case "red":
                 color = Colors.red.withOpacity(0.7);
@@ -269,18 +218,72 @@ class _MapsPageState extends State<MapsPage> {
                 break;
             }
 
-            // Store each segment of the route instead of just single points
-            if (i < _routePoints.length - 1) {
-              _streetTraffic[_routePoints[i]] = color;
-            }
+            print("RoutePoint: ${data[i]}        color: ${color}");
+
+            // Store each segment instead of just individual points
+            _streetTraffic[_routePoints[i]] = color;
           }
           _showTraffic = true;
         });
+      } else {
+        print("Error fetching route traffic: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching route traffic: $e");
     }
   }
+
+  // Future<void> _fetchRouteTraffic() async {
+  //   if (_routePoints.isEmpty) {
+  //     print("No route points found!");
+  //     return;
+  //   }
+
+  //   try {
+  //     final List<Map<String, double>> routePointsData =
+  //         _routePoints.map((point) {
+  //       return {"latitude": point.latitude, "longitude": point.longitude};
+  //     }).toList();
+
+  //     final response = await http.post(
+  //       Uri.parse("http://localhost:5000/predict_route"),
+  //       headers: {"Content-Type": "application/json"},
+  //       body: jsonEncode({"route_points": routePointsData}),
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final List<dynamic> data = json.decode(response.body);
+  //       print("Received route traffic data: ${data.length} points");
+
+  //       setState(() {
+  //         _streetTraffic.clear();
+  //         for (var i = 0; i < data.length; i++) {
+  //           Color color;
+
+  //           switch (data[i]["traffic_color"]) {
+  //             case "red":
+  //               color = Colors.red.withValues(alpha: 0.7);
+  //               break;
+  //             case "yellow":
+  //               color = Colors.yellow.withValues(alpha: 0.7);
+  //               break;
+  //             default:
+  //               color = Colors.green.withValues(alpha: 0.7);
+  //               break;
+  //           }
+
+  //           // Store each segment of the route instead of just single points
+  //           if (i < _routePoints.length - 1) {
+  //             _streetTraffic[_routePoints[i]] = color;
+  //           }
+  //         }
+  //         _showTraffic = true;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching route traffic: $e");
+  //   }
+  // }
 
   Future<void> _fetchFutureTrafficChange() async {
     if (_routePoints.isEmpty) return;
@@ -310,20 +313,61 @@ class _MapsPageState extends State<MapsPage> {
     }
   }
 
+  // Future<void> _fetchAllTrafficPredictions() async {
+  //   final response =
+  //       await http.get(Uri.parse("http://localhost:5000/predict_all"));
+
+  //   if (response.statusCode == 200) {
+  //     final List<dynamic> data = json.decode(response.body);
+  //     print("Received data: ${data.length} streets");
+
+  //     setState(() {
+  //       _streetTraffic.clear();
+  //       for (var item in data) {
+  //         LatLng streetLocation = LatLng(item["latitude"], item["longitude"]);
+  //         Color trafficColor;
+
+  //         switch (item["traffic_color"]) {
+  //           case "red":
+  //             trafficColor = Colors.red;
+  //             break;
+  //           case "yellow":
+  //             trafficColor = Colors.yellow;
+  //             break;
+  //           default:
+  //             trafficColor = Colors.green;
+  //             break;
+  //         }
+
+  //         _streetTraffic[streetLocation] = trafficColor;
+  //       }
+  //       _showTraffic = true;
+  //     });
+  //   } else {
+  //     print("Error fetching traffic predictions");
+  //   }
+  // }
+
   Future<void> _fetchAllTrafficPredictions() async {
-    final response =
-        await http.get(Uri.parse("http://localhost:5000/predict_all"));
-
-    if (response.statusCode == 200) {
-      final List<dynamic> data = json.decode(response.body);
-      print("Received data: ${data.length} streets");
-
+    try {
       setState(() {
-        _streetTraffic.clear();
-        for (var item in data) {
-          LatLng streetLocation = LatLng(item["latitude"], item["longitude"]);
-          Color trafficColor;
+        _isLoading = false; // Show loading indicator
+      });
 
+      final response =
+          await http.get(Uri.parse("http://localhost:5000/predict_all"));
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print("Received traffic data: ${data.length} streets");
+
+        Map<LatLng, Color> newTrafficData = {};
+        for (var item in data) {
+          final lat = item["latitude"].toDouble();
+          final lng = item["longitude"].toDouble();
+          final location = LatLng(lat, lng);
+
+          Color trafficColor;
           switch (item["traffic_color"]) {
             case "red":
               trafficColor = Colors.red;
@@ -336,12 +380,28 @@ class _MapsPageState extends State<MapsPage> {
               break;
           }
 
-          _streetTraffic[streetLocation] = trafficColor;
+          newTrafficData[location] = trafficColor;
         }
-        _showTraffic = true;
+
+        setState(() {
+          _streetTraffic = newTrafficData;
+          print("Updated traffic data: ${_streetTraffic.length} points");
+        });
+      } else {
+        print("Error fetching traffic predictions: ${response.statusCode}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Failed to load traffic data")),
+        );
+      }
+    } catch (e) {
+      print("Error in _fetchAllTrafficPredictions: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e")),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false; // Hide loading indicator
       });
-    } else {
-      print("Error fetching traffic predictions");
     }
   }
 
@@ -699,13 +759,12 @@ class _MapsPageState extends State<MapsPage> {
           icon: const Icon(Icons.layers),
           onSelected: (String value) async {
             if (value == 'traffic') {
-              if (!_showTraffic) {
-                // Only fetch if it's not already loaded
+              setState(() {
+                _showTrafficAll = !_showTrafficAll;
+              });
+              if (!_showTrafficAll) {
                 await _fetchAllTrafficPredictions();
               }
-              setState(() {
-                _showTraffic = !_showTraffic;
-              });
             } else if (value == 'heatmap') {
               setState(() {
                 _showHeatmap = !_showHeatmap;
@@ -715,7 +774,7 @@ class _MapsPageState extends State<MapsPage> {
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
             CheckedPopupMenuItem<String>(
               value: 'traffic',
-              checked: _showTraffic,
+              checked: _showTrafficAll,
               child: const Text('Show Traffic'),
             ),
             CheckedPopupMenuItem<String>(
@@ -824,6 +883,7 @@ class _MapsPageState extends State<MapsPage> {
       ),
     );
   }
+  
 
   Widget _buildSuggestions(bool isOrigin) {
     final suggestions = isOrigin ? _originSuggestions : _destinationSuggestions;
@@ -871,7 +931,7 @@ class _MapsPageState extends State<MapsPage> {
       ),
     );
   }
-
+  
   Widget _buildToggleableSearch() {
     if (_showRouteSearch) {
       // Show route search (origin and destination)
@@ -990,11 +1050,34 @@ class _MapsPageState extends State<MapsPage> {
                         ),
                       if (_showTraffic)
                         PolylineLayer(
+                          polylines: _streetTraffic.entries
+                              .map((entry) {
+                                int index = _routePoints.indexOf(entry.key);
+                                if (index < _routePoints.length - 1) {
+                                  return Polyline(
+                                    points: [
+                                      _routePoints[index],
+                                      _routePoints[index + 1]
+                                    ], // Line segment
+                                    strokeWidth: 5.0,
+                                    color: entry.value, // Traffic color
+                                  );
+                                }
+                                return null; // Null if the index is out of bounds
+                              })
+                              .whereType<Polyline>()
+                              .toList(), // ✅ Fix: Removes nulls & ensures correct type
+                        ),
+                      if (_showTrafficAll &&
+                          _streetTraffic.isNotEmpty) // Add null check
+                        PolylineLayer(
                           polylines: _streetTraffic.entries.map((entry) {
                             return Polyline(
-                              points: [entry.key], // Street coordinates
-                              strokeWidth: 5.0,
-                              color: entry.value, // Predicted traffic color
+                              points: [
+                                entry.key
+                              ], // Single point for each traffic location
+                              strokeWidth: 8.0, // Make it more visible
+                              color: entry.value.withValues(alpha: .7), // Add some transparency
                             );
                           }).toList(),
                         ),
@@ -1002,7 +1085,7 @@ class _MapsPageState extends State<MapsPage> {
                         polylines: [
                           Polyline(
                             points: _routePoints,
-                            strokeWidth: 4.0,
+                            strokeWidth: 2.0,
                             color: Colors.blue,
                           ),
                         ],
