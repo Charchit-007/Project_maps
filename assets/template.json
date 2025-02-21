@@ -1,0 +1,33 @@
+{
+    "heatmapData": [
+        {
+            "lat": 0.0,
+            "lng": 0.0,
+            "count": 5024,
+            "injuries": 2075,
+            "deaths": 11,
+            "topFactors": [
+                {
+                    "factor": "Driver Inattention/Distraction",
+                    "count": 1267
+                },
+                {
+                    "factor": "Failure to Yield Right-of-Way",
+                    "count": 377
+                },
+                {
+                    "factor": "Following Too Closely",
+                    "count": 262
+                }
+            ]
+        }// , more such entries for each point in decreasing order
+        
+    ],
+    "totalRecords": 2155536,
+    "validCoordinates": 1915874,
+    "metadata": {
+        "gridPrecision": 3,
+        "totalHotspots": 53689
+    }
+}
+
