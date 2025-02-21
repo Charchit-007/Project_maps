@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:osm_route_suggestion/main.dart';
 
@@ -11,8 +12,6 @@ class DashboardPage extends StatefulWidget {
   @override
   _DashboardPageState createState() => _DashboardPageState();
 }
-
-
 
 class _DashboardPageState extends State<DashboardPage> {
   Map<String, dynamic>? trafficData;
@@ -36,7 +35,8 @@ class _DashboardPageState extends State<DashboardPage> {
       // final endTime = DateTime.now();
       // print('Request Time: ${endTime.difference(startTime).inMilliseconds} ms');
 
-      if (response.statusCode == 200) {   // agar response succesfullhai, status 200 return hota hai
+      if (response.statusCode == 200) {
+        // agar response succesfullhai, status 200 return hota hai
         setState(() {
           trafficData = json.decode(response.body);
           // jsonify encodes karke bhejta hai, and yaha we decode the response
@@ -61,16 +61,17 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           // App Bar with Navigation
           _buildAppBar(),
-          
+
           // Main Content
           Expanded(
-            child: isLoading      // if data nhi aya, isloading true hoga; once data or even error aya, 'finally' wale code se isLoading false ho jayega
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF8B5CF6),
-                    ),
-                  )
-                : _buildDashboardContent(),
+            child:
+                isLoading // if data nhi aya, isloading true hoga; once data or even error aya, 'finally' wale code se isLoading false ho jayega
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF8B5CF6),
+                        ),
+                      )
+                    : _buildDashboardContent(),
           ),
         ],
       ),
@@ -86,8 +87,9 @@ class _DashboardPageState extends State<DashboardPage> {
         boxShadow: [
           BoxShadow(
             color: Colors.black26,
-            blurRadius: 10,     // higher - increases depth effect
-            offset: Offset(0, 9),    // x, y axis with respect to the parent(container)
+            blurRadius: 10, // higher - increases depth effect
+            offset:
+                Offset(0, 9), // x, y axis with respect to the parent(container)
           ),
         ],
       ),
@@ -147,7 +149,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   style: TextStyle(color: Colors.white),
                 ),
                 SizedBox(width: 8),
-                Icon(Icons.keyboard_arrow_down, color: Colors.white60, size: 18),
+                Icon(Icons.keyboard_arrow_down,
+                    color: Colors.white60, size: 18),
               ],
             ),
           ),
@@ -192,7 +195,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // diff between expanded and flexible is
           // flexible lets child take how much ever space they need
           // expanded forces child to take all avail width
-          flex: 5,    // how much space it should take, with resp to its siblings
+          flex: 5, // how much space it should take, with resp to its siblings
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -202,12 +205,14 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 24),
                 _buildSection(
                   title: "Borough-wise Traffic Analysis",
-                  child: _buildBarChartCard(trafficData!['Borough-wise Congestion']),
+                  child: _buildBarChartCard(
+                      trafficData!['Borough-wise Congestion']),
                 ),
                 const SizedBox(height: 24),
                 _buildSection(
                   title: "Peak Traffic Hours",
-                  child: _buildBarChartCard(trafficData!['Hourly Traffic Volume']),
+                  child:
+                      _buildBarChartCard(trafficData!['Hourly Traffic Volume']),
                 ),
                 const SizedBox(height: 24),
                 _buildSection(
@@ -217,135 +222,141 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 24),
                 _buildSection(
                   title: "Most Common Causes of Accidents",
-                  child: _buildAnalysisCard(trafficData!['Most Common Causes of Accidents']),
+                  child: _buildAnalysisCard(
+                      trafficData!['Most Common Causes of Accidents']),
                 ),
                 const SizedBox(height: 24),
                 _buildSection(
                   title: "Accidents by Vehicle Type",
-                  child: _buildAnalysisCard(trafficData!['Accidents by Vehicle Type']),
+                  child: _buildAnalysisCard(
+                      trafficData!['Accidents by Vehicle Type']),
                 ),
               ],
             ),
           ),
         ),
-        
+
         // Right Sidebar (30%)
         Expanded(
           flex: 3,
-          child: Container(
-            margin: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E293B),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        "Danger Zones",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Text(
-                          "Live",
+          child: SingleChildScrollView(
+            // Wrap the entire sidebar
+            child: Container(
+              margin: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "State of New York",
                           style: TextStyle(
-                            color: Color(0xFF8B5CF6),
+                            color: Colors.white,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(16),
-                      bottomRight: Radius.circular(16),
-                    ),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Image.asset(
-                          'assets/img1.jpg',
-                          fit: BoxFit.cover,
-                        ),
                         Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.7),
-                              ],
-                            ),
+                            color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        ),
-                        Positioned(
-                          bottom: 16,
-                          left: 16,
-                          right: 16,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Dangerous Streets",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context) => MapsPage()));
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF8B5CF6),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                    horizontal: 20,
-                                  ),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text("Street Analysis"),
-                                    SizedBox(width: 8),
-                                    Icon(Icons.arrow_forward, size: 16),
-                                  ],
-                                ),
-                              ),
-                            ],
+                          child: const Text(
+                            "Routex",
+                            style: TextStyle(
+                              color: Color(0xFF8B5CF6),
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                _buildDangerousStreetsSection(),
-              ],
+
+                  /// Keep Image and Analysis Button
+                  SizedBox(
+                    height: 250, // Adjust height to fit content properly
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(16),
+                        bottomRight: Radius.circular(16),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.asset(
+                            'assets/img1.jpg',
+                            fit: BoxFit.cover,
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  Colors.black.withOpacity(0.7),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 16,
+                            left: 16,
+                            right: 16,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MapsPage(),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF8B5CF6),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                      horizontal: 20,
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text("Street Analysis"),
+                                      SizedBox(width: 8),
+                                      Icon(Icons.arrow_forward, size: 16),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDangerousStreetsSection(), // This section will also be scrollable
+                ],
+              ),
             ),
           ),
         ),
@@ -355,33 +366,35 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildBoroughSummary() {
     // Extract borough data
-    final boroughData = trafficData!['boro_wise_congestion'] as Map<String, dynamic>;    // !(null assertion operator) says that the traffic data is surely NOT NULL, which avoids compile error
+    final boroughData = trafficData!['Borough-wise Congestion'] as Map<String,
+        dynamic>; // !(null assertion operator) says that the traffic data is surely NOT NULL, which avoids compile error
     // ! use only when youa re sure data is not null
-    
+
     if (boroughData.isEmpty) {
       return const SizedBox.shrink();
     }
-    
+
     // Get top 3 boroughs
     final sortedBoroughs = boroughData.entries.toList()
       ..sort((a, b) => (b.value as num).compareTo(a.value as num));
-      // .entries converts into iterable entry with key and values --> .list converts to list
-      // as sort is avail only for list
-      // sort works in place
+    // .entries converts into iterable entry with key and values --> .list converts to list
+    // as sort is avail only for list
+    // sort works in place
     final topBoroughs = sortedBoroughs.take(3).toList();
-    
+
     return Row(
       children: topBoroughs.asMap().entries.map((entry) {
         // this runs a loop for each item in the top boroughs list
         final index = entry.key;
         final borough = entry.value.key;
         final volume = entry.value.value;
-        
+
         IconData icon;
         Color color;
         String label;
-        
-        if (index == 0) {       // top congested
+
+        if (index == 0) {
+          // top congested
           icon = Icons.warning_rounded;
           color = const Color(0xFFEF4444);
           label = "Highest Traffic";
@@ -394,10 +407,10 @@ class _DashboardPageState extends State<DashboardPage> {
           color = const Color(0xFF10B981);
           label = "Moderate Traffic";
         }
-        
+
         return _buildMetricCard(
           title: borough,
-          value: volume.toString(),
+          value: volume,
           subtext: label,
           icon: icon,
           color: color,
@@ -408,7 +421,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildMetricCard({
     required String title,
-    required String value,
+    required int value,
     String? change,
     bool isPositive = false,
     required String subtext,
@@ -446,7 +459,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
+                    color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -459,7 +472,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              value,
+              formatNumberShort(value as int),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -482,14 +495,18 @@ class _DashboardPageState extends State<DashboardPage> {
                     isPositive
                         ? Icons.arrow_upward_rounded
                         : Icons.arrow_downward_rounded,
-                    color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                    color: isPositive
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFEF4444),
                     size: 16,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     change,
                     style: TextStyle(
-                      color: isPositive ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      color: isPositive
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFEF4444),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -526,6 +543,7 @@ class _DashboardPageState extends State<DashboardPage> {
       return _buildEmptyCard("No chart data available");
     }
 
+
     List<BarChartGroupData> barGroups = [];
     List<String> titles = [];
 
@@ -560,6 +578,9 @@ class _DashboardPageState extends State<DashboardPage> {
       );
       index++;
     });
+    List<FlSpot> dataPoints = barGroups.map((bar) {
+    return FlSpot(bar.x.toDouble(), bar.barRods.first.toY);
+    }).toList();
 
     return Container(
       height: 350,
@@ -571,46 +592,28 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                "Current Analysis",
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF111826),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  children: [
-                    Text(
-                      "Today",
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Colors.white70,
-                      size: 16,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 30),
           Expanded(
             child: BarChart(
               BarChartData(
+                barTouchData: BarTouchData(
+                  touchTooltipData: BarTouchTooltipData(
+                    tooltipBgColor:
+                        Colors.black54, // Background color for better contrast
+                    tooltipPadding: const EdgeInsets.all(8),
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      return BarTooltipItem(
+                        '${rod.toY.toInt()}', // Show the Y value
+                        const TextStyle(
+                          color:
+                              Colors.white, // Set tooltip text color to white
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      );
+                    },
+                  ),
+                ),
                 alignment: BarChartAlignment.spaceAround,
                 barGroups: barGroups,
                 maxY: maxValue * 1.1, // Add 10% padding at the top
@@ -618,7 +621,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   show: true,
                   drawVerticalLine: false,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: const Color(0xFF2D3748),
+                    color: Colors.black,
                     strokeWidth: 1,
                     dashArray: [5, 5],
                   ),
@@ -630,7 +633,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     sideTitles: SideTitles(showTitles: false),
                   ),
                   rightTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                    sideTitles: SideTitles(
+                      showTitles: false,
+                      reservedSize: 50, // Increase this value for more space
+                    ),
                   ),
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
@@ -676,14 +682,102 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
+//   return Container(
+//   height: 350,
+//   padding: const EdgeInsets.all(20),
+//   decoration: BoxDecoration(
+//     color: const Color(0xFF1E293B),
+//     borderRadius: BorderRadius.circular(16),
+//   ),
+//   child: LineChart(
+//     LineChartData(
+//       minY: 0,
+//       maxY: maxValue * 1.1, // Add padding to top
+//       gridData: FlGridData(
+//         show: true,
+//         drawVerticalLine: false,
+//         getDrawingHorizontalLine: (value) => FlLine(
+//           color: Colors.black,
+//           strokeWidth: 1,
+//           dashArray: [5, 5],
+//         ),
+//       ),
+//       borderData: FlBorderData(show: false),
+//       titlesData: FlTitlesData(
+//         show: true,
+//         topTitles: AxisTitles(
+//           sideTitles: SideTitles(showTitles: false),
+//         ),
+//         rightTitles: AxisTitles(
+//           sideTitles: SideTitles(
+//             showTitles: true,
+//             reservedSize: 50, // Adjusted for more space
+//           ),
+//         ),
+//         bottomTitles: AxisTitles(
+//           sideTitles: SideTitles(
+//             showTitles: true,
+//             getTitlesWidget: (value, meta) {
+//               if (value >= titles.length || value < 0) {
+//                 return const SizedBox();
+//               }
+//               return Padding(
+//                 padding: const EdgeInsets.only(top: 8.0),
+//                 child: Text(
+//                   titles[value.toInt()],
+//                   style: const TextStyle(
+//                     color: Colors.white60,
+//                     fontSize: 12,
+//                   ),
+//                 ),
+//               );
+//             },
+//           ),
+//         ),
+//         leftTitles: AxisTitles(
+//           sideTitles: SideTitles(
+//             showTitles: true,
+//             reservedSize: 40,
+//             getTitlesWidget: (value, meta) {
+//               return Text(
+//                 '${value.toInt()}',
+//                 style: const TextStyle(
+//                   color: Colors.white60,
+//                   fontSize: 12,
+//                 ),
+//               );
+//             },
+//           ),
+//         ),
+//       ),
+//       lineBarsData: [
+//         LineChartBarData(
+//               spots: dataPoints, // Your converted data
+//           isCurved: true,
+//           color: Colors.blueAccent,
+//           barWidth: 3,
+//           isStrokeCapRound: true,
+//           belowBarData: BarAreaData(
+//             show: true,
+//             color: Colors.blueAccent.withOpacity(0.3),
+//           ),
+//           dotData: FlDotData(show: true), // Show dots on line
+//         ),
+//       ],
+//     ),
+//   ),
+// );
+//   }
 
   Widget _buildBoroughIntervalCharts() {
-    final intervalGraphsData = trafficData!['Traffic by 3-Hour Intervals Graphs'] as Map<String, dynamic>;
-    
+    final intervalGraphsData =
+        trafficData!['Traffic by 3-Hour Intervals Graphs']
+            as Map<String, dynamic>;
+
     if (intervalGraphsData.isEmpty) {
       return _buildEmptyCard("No interval data available");
     }
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -695,7 +789,7 @@ class _DashboardPageState extends State<DashboardPage> {
         children: intervalGraphsData.entries.map((entry) {
           final borough = entry.key;
           final base64Image = entry.value;
-          
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -720,7 +814,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   ],
                 ),
               ),
-              ClipRRect(
+              SizedBox(
+                width: 600,
+                height: 400,
+                child:ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.memory(
                   base64Decode(base64Image),
@@ -728,7 +825,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   width: double.infinity,
                   fit: BoxFit.contain,
                 ),
-              ),
+              )),
               const Divider(color: Color(0xFF2D3748), height: 32),
             ],
           );
@@ -752,10 +849,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
     // Sort by value for better visualization
     items.sort((a, b) => (b['value'] as num).compareTo(a['value'] as num));
-    
+
     // Take top 5 items for cleaner display
     final displayItems = items.take(5).toList();
-    
+
     // Calculate max value for percentage calculation
     final maxValue = displayItems.first['value'] as num;
 
@@ -780,7 +877,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
   //Street Analysis
 
-  Widget _buildAnalysisItem(String name, String value, double percentage, int index) {
+  Widget _buildAnalysisItem(
+      String name, String value, double percentage, int index) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -831,68 +929,67 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildDangerousStreetsSection() {
-    final dangerousStreetsData = trafficData!['Top 5 Dangerous Streets Graphs'] as Map<String, dynamic>;
-    
+    final dangerousStreetsData =
+        trafficData!['Top 5 Dangerous Streets Graphs'] as Map<String, dynamic>;
+
     if (dangerousStreetsData.isEmpty) {
       return const SizedBox.shrink();
     }
-    
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Text(
-              "Top Dangerous Streets",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text(
+            "Top Dangerous Streets",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          Expanded(
-            child: DefaultTabController(
-              length: dangerousStreetsData.length,
-              child: Column(
-                children: [
-                  TabBar(
-                    isScrollable: true,
-                    tabAlignment: TabAlignment.start,
-                    dividerColor: Colors.transparent,
-                    labelColor: const Color(0xFF8B5CF6),
-                    unselectedLabelColor: Colors.white60,
-                    indicatorColor: const Color(0xFF8B5CF6),
-                    tabs: dangerousStreetsData.keys.map((borough) => 
-                      Tab(text: borough)
-                    ).toList(),
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      children: dangerousStreetsData.entries.map((entry) {
-                        final borough = entry.key;
-                        final base64Image = entry.value;
-                        
-                        return Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.memory(
-                              base64Decode(base64Image),
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
+        ),
+        DefaultTabController(
+          length: dangerousStreetsData.length,
+          child: Column(
+            children: [
+              TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                dividerColor: Colors.transparent,
+                labelColor: const Color(0xFF8B5CF6),
+                unselectedLabelColor: Colors.white60,
+                indicatorColor: const Color(0xFF8B5CF6),
+                tabs: dangerousStreetsData.keys
+                    .map((borough) => Tab(text: borough))
+                    .toList(),
               ),
-            ),
+
+              /// Fixed scroll issue by wrapping TabBarView with a flexible container
+              SizedBox(
+                height: 400, // Adjust height to prevent overflow
+                child: TabBarView(
+                  children: dangerousStreetsData.entries.map((entry) {
+                    final base64Image = entry.value;
+
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(
+                          base64Decode(base64Image),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -911,5 +1008,17 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       ),
     );
+  }
+}
+
+String formatNumberShort(int number) {
+  if (number >= 1e9) {
+    return '${(number / 1e9).toStringAsFixed(1)}B';
+  } else if (number >= 1e6) {
+    return '${(number / 1e6).toStringAsFixed(1)}M';
+  } else if (number >= 1e3) {
+    return '${(number / 1e3).toStringAsFixed(1)}K';
+  } else {
+    return number.toString();
   }
 }

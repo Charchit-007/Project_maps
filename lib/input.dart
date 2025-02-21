@@ -11,6 +11,7 @@ class TrafficAnalysisApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+          theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
       home: StreetInputScreen(location: this.location),
     );
   }

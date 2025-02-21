@@ -11,6 +11,7 @@ import 'dart:async';
 void main() {
   runApp(MaterialApp(
     home: const DashboardPage(),
+    theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
     debugShowCheckedModeBanner: false,
   ));
   // runApp(const OpenStreetMapRouteApp());
@@ -207,13 +208,13 @@ class _MapsPageState extends State<MapsPage> {
             Color color;
             switch (data[i]["traffic_color"]) {
               case "red":
-                color = Colors.red;
+                color = Colors.red.withOpacity(0.7);
                 break;
               case "yellow":
-                color = Colors.yellow;
+                color = Colors.yellow.withOpacity(0.7);
                 break;
               default:
-                color = Colors.green;
+                color = Colors.green.withOpacity(0.7);
                 break;
             }
 
@@ -1076,7 +1077,7 @@ class _MapsPageState extends State<MapsPage> {
                                 entry.key
                               ], // Single point for each traffic location
                               strokeWidth: 8.0, // Make it more visible
-                              color: entry.value.withValues(alpha: .7), // Add some transparency
+                              color: entry.value.withOpacity(0.7), // Add some transparency
                             );
                           }).toList(),
                         ),
