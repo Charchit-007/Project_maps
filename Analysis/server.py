@@ -6,6 +6,7 @@ import pandas as pd
 from flask_cors import CORS
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import requests
 import seaborn as sns
 import joblib
 import logging
@@ -384,28 +385,59 @@ def street_analysis():
 #     predicted_volume = model.predict(input_data)[0]
 #     return predicted_volume
 
-def predict_traffic(lat, lon, hour, minute):
+# 'HH': hour,
+#             'MM': minute,
+#             'temp_max': 25,  # More realistic default values
+#             'temp_min': 15,  # that could be updated with real
+#             'precipitation': 0.1,  # weather API data
+#             'rain': 0,
+#             'snow': 0,
+#             'windspeed_max': 15
+
+def fetch_weather_data():
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": 40.7128,  # New York City Latitude
+        "longitude": -74.0060,  # New York City Longitude
+        "hourly": ["temperature_2m", "precipitation", "windspeed_10m"],
+        "current_weather": True,
+        "timezone": "America/New_York"
+    }
     try:
-        # Here you could add API call to get real weather data
-        # For now using more realistic dummy values
-        input_data = pd.DataFrame([{
-            'HH': hour,
-            'MM': minute,
-            'temp_max': 25,  # More realistic default values
-            'temp_min': 15,  # that could be updated with real
-            'precipitation': 0.1,  # weather API data
-            'rain': 0,
-            'snow': 0,
-            'windspeed_max': 15
-        }])
-        
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        current_weather = data.get("current_weather", {})
+        return {
+            "temp_max": current_weather.get("temperature", 25),
+            "temp_min": current_weather.get("temperature", 15),
+            "precipitation": current_weather.get("precipitation", 0.1),
+            
+            "rain": 1 if current_weather.get("precipitation", 0) > 0 else 0,
+            "snow": 0 ,
+            "windspeed_max": current_weather.get("windspeed", 15),
+        }
+    except requests.RequestException as e:
+        print(f"Weather API request failed: {e}")
+        return {  # Dummy fallback data
+            "temp_max": 25,
+            "temp_min": 15,
+            "precipitation": 0.1,
+            "rain": 0,
+            "snow": 0,
+            "windspeed_max": 15
+        }
+
+weather_data = fetch_weather_data()
+
+def predict_traffic(lat,lon,hour, minute):
+    try:
+        input_data = pd.DataFrame([{ "HH": hour, "MM": minute,**weather_data}])
         predicted_volume = model.predict(input_data)[0]
         return predicted_volume
-        
     except Exception as e:
         print(f"Error predicting traffic: {e}")
-        return 0 
-    
+        return 0
 
 
 
