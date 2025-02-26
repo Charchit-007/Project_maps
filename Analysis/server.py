@@ -33,11 +33,11 @@ CORS(app)  # Enable CORS for all routes
 # Volume data
 df = pd.read_csv(VOLUME_DATA_PATH)
 # Load trained model
-# model = joblib.load(TRAFFIC_MODEL_PATH)
+model = joblib.load(TRAFFIC_MODEL_PATH)
 
 
 # Load dataset
-# vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
+vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
 
 df['Yr'] = df['Yr'].astype(str)
 df['M'] = df['M'].astype(str)
@@ -572,7 +572,7 @@ def predict_future():
 #     return jsonify(predictions)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000,debug=True)
+    app.run(host="0.0.0.0", port=5000)
 
 
 

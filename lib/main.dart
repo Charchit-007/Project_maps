@@ -129,6 +129,7 @@ class _MapsPageState extends State<MapsPage> {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
+                  color: Colors.black
                 ),
               ),
             ],
@@ -1048,6 +1049,7 @@ class _MapsPageState extends State<MapsPage> {
                             0.9: Colors.red, // Very high intensity
                           }),
                         ),
+                        
                       if (_showTraffic)
                         PolylineLayer(
                           polylines: _streetTraffic.entries
@@ -1085,11 +1087,12 @@ class _MapsPageState extends State<MapsPage> {
                         polylines: [
                           Polyline(
                             points: _routePoints,
-                            strokeWidth: 2.0,
+                            strokeWidth: 5.0,
                             color: Colors.blue,
                           ),
                         ],
                       ),
+                      
                       MarkerLayer(
                         markers: [
                           if (_origin != null)
