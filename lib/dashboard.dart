@@ -138,19 +138,19 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             child: const Row(
               children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: Color(0xFF8B5CF6),
-                  child: Icon(Icons.person, color: Colors.white, size: 18),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  "Admin",
-                  style: TextStyle(color: Colors.white),
-                ),
-                SizedBox(width: 8),
-                Icon(Icons.keyboard_arrow_down,
-                    color: Colors.white60, size: 18),
+                // CircleAvatar(
+                //   radius: 16,
+                //   backgroundColor: Color(0xFF8B5CF6),
+                //   child: Icon(Icons.person, color: Colors.white, size: 18),
+                // ),
+                // SizedBox(width: 8),
+                // Text(
+                //   "Admin",
+                //   style: TextStyle(color: Colors.white),
+                // ),
+                // SizedBox(width: 8),
+                // Icon(Icons.keyboard_arrow_down,
+                //     color: Colors.white60, size: 18),
               ],
             ),
           ),
