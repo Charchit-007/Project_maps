@@ -90,6 +90,8 @@ def traffic(df, df_acc):
             graph_base64 = generate_base64_plot(fig)
             plt.close(fig)
             accident_hotspots_graphs[boro] = graph_base64
+        print(f"accident_hotspots",accident_hotspots)
+        
 
         # Most common causes of accidents
         common_causes = collision_data["Contributing Factor"].value_counts().to_dict()

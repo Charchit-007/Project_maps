@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
 import 'package:osm_route_suggestion/main.dart';
 
@@ -543,7 +544,6 @@ class _DashboardPageState extends State<DashboardPage> {
       return _buildEmptyCard("No chart data available");
     }
 
-
     List<BarChartGroupData> barGroups = [];
     List<String> titles = [];
 
@@ -579,7 +579,7 @@ class _DashboardPageState extends State<DashboardPage> {
       index++;
     });
     List<FlSpot> dataPoints = barGroups.map((bar) {
-    return FlSpot(bar.x.toDouble(), bar.barRods.first.toY);
+      return FlSpot(bar.x.toDouble(), bar.barRods.first.toY);
     }).toList();
 
     return Container(
@@ -815,17 +815,17 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               SizedBox(
-                width: 600,
-                height: 400,
-                child:ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.memory(
-                  base64Decode(base64Image),
-                  height: 200,
-                  width: double.infinity,
-                  fit: BoxFit.contain,
-                ),
-              )),
+                  width: 600,
+                  height: 400,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      base64Decode(base64Image),
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                    ),
+                  )),
               const Divider(color: Color(0xFF2D3748), height: 32),
             ],
           );
@@ -928,70 +928,80 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildDangerousStreetsSection() {
-    final dangerousStreetsData =
-        trafficData!['Top 5 Dangerous Streets Graphs'] as Map<String, dynamic>;
+ Widget _buildDangerousStreetsSection() {
+  final dangerousStreetsData =
+      trafficData!['Top 5 Dangerous Streets'] as Map<String, dynamic>;
+      // ! ensures traffic data is non-null.
 
-    if (dangerousStreetsData.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Text(
-            "Top Dangerous Streets",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        DefaultTabController(
-          length: dangerousStreetsData.length,
-          child: Column(
-            children: [
-              TabBar(
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                dividerColor: Colors.transparent,
-                labelColor: const Color(0xFF8B5CF6),
-                unselectedLabelColor: Colors.white60,
-                indicatorColor: const Color(0xFF8B5CF6),
-                tabs: dangerousStreetsData.keys
-                    .map((borough) => Tab(text: borough))
-                    .toList(),
-              ),
-
-              /// Fixed scroll issue by wrapping TabBarView with a flexible container
-              SizedBox(
-                height: 400, // Adjust height to prevent overflow
-                child: TabBarView(
-                  children: dangerousStreetsData.entries.map((entry) {
-                    final base64Image = entry.value;
-
-                    return Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.memory(
-                          base64Decode(base64Image),
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+  if (dangerousStreetsData.isEmpty) {
+    return const SizedBox.shrink();
   }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Text(
+          "Top Dangerous Streets",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      DefaultTabController(
+        length: dangerousStreetsData.length,
+        child: Column(
+          children: [
+            TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              dividerColor: Colors.transparent,
+              labelColor: const Color(0xFF8B5CF6),
+              unselectedLabelColor: Colors.white60,
+              indicatorColor: const Color(0xFF8B5CF6),
+              tabs: dangerousStreetsData.keys
+                  .map((borough) => Tab(text: borough))
+                  .toList(),  // as TabBar requires a list of widgets.
+            ),
+            SizedBox(
+              height: 400, // Adjust height to prevent overflow
+              child: TabBarView(
+                children: dangerousStreetsData.entries.map((entry) {
+                  final borough = entry.key;
+                  final streetsData = (entry.value as Map<String, dynamic>).entries
+                      .map((e) => BarData(e.key, int.parse(e.value.toString())))
+                      .toList();
+                      // converts each street entry into a BarData object.
+
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SfCartesianChart(
+                      primaryXAxis: CategoryAxis(),  // meaning it will display names of streets instead of numerical values.
+                      title: ChartTitle(
+                          text: 'Top 5 Dangerous Streets in $borough'),
+                      series: <CartesianSeries<BarData, String>>[
+                        BarSeries<BarData, String>(
+                          dataSource: streetsData,
+                          xValueMapper: (BarData data, _) => data.street,
+                          yValueMapper: (BarData data, _) => data.count,
+                          color: Colors.red,
+                        )
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 
   Widget _buildEmptyCard(String message) {
     return Container(
@@ -1021,4 +1031,10 @@ String formatNumberShort(int number) {
   } else {
     return number.toString();
   }
+}
+
+class BarData {
+  final String street;
+  final int count;
+  BarData(this.street, this.count);
 }
