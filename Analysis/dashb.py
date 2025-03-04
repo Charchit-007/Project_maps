@@ -83,13 +83,13 @@ def traffic(df, df_acc):
             )
             accident_hotspots[boro] = top_streets
 
-            fig, ax = plt.subplots()
-            ax.barh(list(top_streets.keys()), list(top_streets.values()), color="red")
-            ax.set_xlabel("Accident Count")
-            ax.set_title(f"Top 5 Dangerous Streets in {boro}")
-            graph_base64 = generate_base64_plot(fig)
-            plt.close(fig)
-            accident_hotspots_graphs[boro] = graph_base64
+            # fig, ax = plt.subplots()
+            # ax.barh(list(top_streets.keys()), list(top_streets.values()), color="red")
+            # ax.set_xlabel("Accident Count")
+            # ax.set_title(f"Top 5 Dangerous Streets in {boro}")
+            # graph_base64 = generate_base64_plot(fig)
+            # plt.close(fig)
+            # accident_hotspots_graphs[boro] = graph_base64
         print(f"accident_hotspots",accident_hotspots)
         
 
@@ -109,7 +109,7 @@ def traffic(df, df_acc):
             "Top 3 Busiest Hours": busiest_hours,
             "Top 3 Busiest Hours Graphs": busiest_hours_graphs,
             "Top 5 Dangerous Streets": accident_hotspots,
-            "Top 5 Dangerous Streets Graphs": accident_hotspots_graphs,
+            # "Top 5 Dangerous Streets Graphs": accident_hotspots_graphs,
             "Most Common Causes of Accidents": common_causes,
             "Accidents by Vehicle Type": accidents_by_vehicle
         })
