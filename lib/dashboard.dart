@@ -969,10 +969,10 @@ class _DashboardPageState extends State<DashboardPage> {
             SizedBox(
               height: 400, // Adjust height to prevent overflow
               child: TabBarView(
-                children: dangerousStreetsData.entries.map((entry) {
-                  final borough = entry.key;
-                  final streetsData = (entry.value as Map<String, dynamic>).entries
-                      .map((e) => BarData(e.key, int.parse(e.value.toString())))
+                children: dangerousStreetsData.entries.map((entry) { // forms a loop , entry is each item (boro)
+                  final borough = entry.key;    // boro
+                  final streetsData = (entry.value as Map<String, dynamic>).entries     // value are the list(json) of top 5 streets for a boro
+                      .map((e) => BarData(e.key, int.parse(e.value.toString())))    // e is each street inside the value(upar wala), storing the street and its count inside a BarData custom object
                       .toList();
                       // converts each street entry into a BarData object.
 
@@ -985,7 +985,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       series: <CartesianSeries<BarData, String>>[
                         BarSeries<BarData, String>(
                           dataSource: streetsData,
-                          xValueMapper: (BarData data, _) => data.street,
+                          xValueMapper: (BarData data, _) => data.street, // custom object se fetching street name and its count
                           yValueMapper: (BarData data, _) => data.count,
                           color: Colors.red,
                         )
