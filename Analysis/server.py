@@ -33,11 +33,11 @@ CORS(app)  # Enable CORS for all routes
 # Volume data
 df = pd.read_csv(VOLUME_DATA_PATH)
 # Load trained model
-model = joblib.load(TRAFFIC_MODEL_PATH)
+# model = joblib.load(TRAFFIC_MODEL_PATH)
 
 
 # Load dataset
-vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
+# vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
 
 df['Yr'] = df['Yr'].astype(str)
 df['M'] = df['M'].astype(str)
@@ -52,10 +52,10 @@ df_acc['Hour'] = pd.to_datetime(df_acc['Time'], format='%H:%M:%S').dt.hour  # Ho
 # Speeds dataset
 import json
 # Read the JSON file
-with open(SPEEDS_DATA_PATH, 'r') as f:
-    data = json.load(f)
+# with open(SPEEDS_DATA_PATH, 'r') as f:
+#     data = json.load(f)
 # Convert to DataFrame
-speeds = json_to_csv(data)
+# speeds = json_to_csv(data)
 
 @app.route('/traffic-analysis', methods=['GET','POST'])
 def traffic_analysis():
@@ -572,7 +572,7 @@ def predict_future():
 #     return jsonify(predictions)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
 
 
 
