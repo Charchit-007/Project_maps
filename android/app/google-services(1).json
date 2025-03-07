@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1090445059840",
+    "project_id": "routex-ad46e",
+    "storage_bucket": "routex-ad46e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1090445059840:android:91bb7e4b16402e1c8575e5",
+        "android_client_info": {
+          "package_name": "com.example.osm_route_suggestion"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAEOFysLHlP-6M743QAEOGeXZHeEf6Dvw0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
