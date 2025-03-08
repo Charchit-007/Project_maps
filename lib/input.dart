@@ -11,7 +11,7 @@ class TrafficAnalysisApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-          theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
+      theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
       home: StreetInputScreen(location: this.location),
     );
   }
@@ -118,19 +118,20 @@ class AnalysisResultWidget extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Row(children: [
           Icon(icon.icon),
+          SizedBox(width: 8), // Add spacing between icon and text
           Text(
             title,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
         ]));
   }
 
-  Widget _buildVolumeAnalysis() {
+  Widget _buildVolumeAnalysis(bool isMobile) {
     // ------ Volume analysis displ
     if (data['volume_metrics'] == null)
       return const SizedBox(
         child: Text(
-          "No data dound.",
+          "No data found.",
           style: TextStyle(color: Colors.red),
         ),
       );
@@ -139,34 +140,54 @@ class AnalysisResultWidget extends StatelessWidget {
         constraints: BoxConstraints(minHeight: 150),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize
-              .min, // Ensures the column takes only the required space
+          mainAxisSize: MainAxisSize.min,
 
           children: [
             // Most and least congested hours
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoCard(
+            if (isMobile)
+              Column(
+                children: [
+                  _buildInfoCard(
                     "Most Congested Hour",
                     "${data['volume_metrics']['most_congested_hour']['idxmax']['0']}:00",
                     "Avg Volume: ${data['volume_metrics']['most_congested_hour']['max']['0']}",
                     Icons.arrow_upward,
                     Colors.red,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildInfoCard(
+                  SizedBox(height: 16),
+                  _buildInfoCard(
                     "Least Congested Hour",
                     "${data['volume_metrics']['least_congested_hour']['idxmin']['0']}:00",
                     "Avg Volume: ${data['volume_metrics']['least_congested_hour']['min']['0']}",
                     Icons.arrow_downward,
                     Colors.green,
                   ),
-                ),
-              ],
-            ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoCard(
+                      "Most Congested Hour",
+                      "${data['volume_metrics']['most_congested_hour']['idxmax']['0']}:00",
+                      "Avg Volume: ${data['volume_metrics']['most_congested_hour']['max']['0']}",
+                      Icons.arrow_upward,
+                      Colors.red,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildInfoCard(
+                      "Least Congested Hour",
+                      "${data['volume_metrics']['least_congested_hour']['idxmin']['0']}:00",
+                      "Avg Volume: ${data['volume_metrics']['least_congested_hour']['min']['0']}",
+                      Icons.arrow_downward,
+                      Colors.green,
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: 16),
 
             // Hourly volume chart
@@ -243,8 +264,7 @@ class AnalysisResultWidget extends StatelessWidget {
         ),
 
         // Scatter Plot
-        if (correlation['corr_scatter'] == null) ...[
-          // abhi ke liye nahi dikha raha graph
+        if (correlation['corr_scatter'] != null) ...[
           Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -304,11 +324,11 @@ class AnalysisResultWidget extends StatelessWidget {
     }
   }
 
-  Widget _buildSafetyAnalysis() {
+  Widget _buildSafetyAnalysis(bool isMobile) {
     if (data['safety_metrics'] == null)
       return const SizedBox(
         child: Text(
-          "No data dound.",
+          "No data found.",
           style: TextStyle(color: Colors.red),
         ),
       );
@@ -318,39 +338,68 @@ class AnalysisResultWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Safety metrics in cards
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
+        if (isMobile)
+          Column(
+            children: [
+              _buildInfoCard(
                 "Total Accidents",
                 "${safetyMetrics['total_accidents']}",
                 "",
                 Icons.car_crash,
                 Colors.amber,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildInfoCard(
+              SizedBox(height: 16),
+              _buildInfoCard(
                 "Total Injuries",
                 "${safetyMetrics['total_injuries']}",
                 "Severity Ratio: ${safetyMetrics['severity_ratio']}",
                 Icons.local_hospital,
                 Colors.orange,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildInfoCard(
+              SizedBox(height: 16),
+              _buildInfoCard(
                 "Total Fatalities",
                 "${safetyMetrics['total_fatalities']}",
                 "",
                 Icons.dangerous,
                 Colors.red,
               ),
-            ),
-          ],
-        ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  "Total Accidents",
+                  "${safetyMetrics['total_accidents']}",
+                  "",
+                  Icons.car_crash,
+                  Colors.amber,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoCard(
+                  "Total Injuries",
+                  "${safetyMetrics['total_injuries']}",
+                  "Severity Ratio: ${safetyMetrics['severity_ratio']}",
+                  Icons.local_hospital,
+                  Colors.orange,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoCard(
+                  "Total Fatalities",
+                  "${safetyMetrics['total_fatalities']}",
+                  "",
+                  Icons.dangerous,
+                  Colors.red,
+                ),
+              ),
+            ],
+          ),
         const SizedBox(height: 24),
 
         // Accidents by hour chart
@@ -369,11 +418,11 @@ class AnalysisResultWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildTrendAnalysis() {
+  Widget _buildTrendAnalysis(bool isMobile) {
     if (data['trend_analysis'] == null)
       return const SizedBox(
         child: Text(
-          "No data dound.",
+          "No data found.",
           style: TextStyle(color: Colors.red),
         ),
       );
@@ -392,10 +441,10 @@ class AnalysisResultWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Growth metrics
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
+        if (isMobile)
+          Column(
+            children: [
+              _buildInfoCard(
                 "Volume Growth",
                 formatGrowth(volumeGrowth),
                 "Year over Year",
@@ -406,10 +455,8 @@ class AnalysisResultWidget extends StatelessWidget {
                     ? Colors.red
                     : Colors.green,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildInfoCard(
+              SizedBox(height: 16),
+              _buildInfoCard(
                 "Accident Growth",
                 formatGrowth(accidentGrowth),
                 "Year over Year",
@@ -420,9 +467,40 @@ class AnalysisResultWidget extends StatelessWidget {
                     ? Colors.red
                     : Colors.green,
               ),
-            ),
-          ],
-        ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  "Volume Growth",
+                  formatGrowth(volumeGrowth),
+                  "Year over Year",
+                  volumeGrowth != null && volumeGrowth > 0
+                      ? Icons.trending_up
+                      : Icons.trending_down,
+                  volumeGrowth != null && volumeGrowth > 0
+                      ? Colors.red
+                      : Colors.green,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoCard(
+                  "Accident Growth",
+                  formatGrowth(accidentGrowth),
+                  "Year over Year",
+                  accidentGrowth != null && accidentGrowth > 0
+                      ? Icons.trending_up
+                      : Icons.trending_down,
+                  accidentGrowth != null && accidentGrowth > 0
+                      ? Colors.red
+                      : Colors.green,
+                ),
+              ),
+            ],
+          ),
         const SizedBox(height: 16),
 
         // Trend chart
@@ -431,11 +509,11 @@ class AnalysisResultWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRiskAnalysis() {
+  Widget _buildRiskAnalysis(bool isMobile) {
     if (data['risk_analysis'] == null)
       return const SizedBox(
         child: Text(
-          "No data dound.",
+          "No data found.",
           style: TextStyle(color: Colors.red),
         ),
       );
@@ -446,39 +524,68 @@ class AnalysisResultWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Risk metrics
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
+        if (isMobile)
+          Column(
+            children: [
+              _buildInfoCard(
                 "Riskiest Hour",
                 "${riskAnalysis['riskiest_hour']}:00",
                 "Risk Factor: ${riskAnalysis['risk_ratio'].toStringAsFixed(2)}",
                 Icons.warning,
                 Colors.deepOrange,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildInfoCard(
+              SizedBox(height: 16),
+              _buildInfoCard(
                 "Peak Volume Hour",
                 "${riskAnalysis['peak_volume_hour']}:00",
                 "",
                 Icons.timeline,
                 Colors.blue,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildInfoCard(
+              SizedBox(height: 16),
+              _buildInfoCard(
                 "Peak Accident Hour",
                 "${riskAnalysis['peak_accident_hour']}:00",
                 "",
                 Icons.car_crash,
                 Colors.red,
               ),
-            ),
-          ],
-        ),
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  "Riskiest Hour",
+                  "${riskAnalysis['riskiest_hour']}:00",
+                  "Risk Factor: ${riskAnalysis['risk_ratio'].toStringAsFixed(2)}",
+                  Icons.warning,
+                  Colors.deepOrange,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoCard(
+                  "Peak Volume Hour",
+                  "${riskAnalysis['peak_volume_hour']}:00",
+                  "",
+                  Icons.timeline,
+                  Colors.blue,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInfoCard(
+                  "Peak Accident Hour",
+                  "${riskAnalysis['peak_accident_hour']}:00",
+                  "",
+                  Icons.car_crash,
+                  Colors.red,
+                ),
+              ),
+            ],
+          ),
         const SizedBox(height: 16),
 
         // Risk analysis chart
@@ -488,7 +595,7 @@ class AnalysisResultWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildBlockageAnalysis() {
+  Widget _buildBlockageAnalysis(bool isMobile) {
     if (data['blockages'] == null) {
       return const SizedBox(
         child: Text(
@@ -504,56 +611,97 @@ class AnalysisResultWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Blockage metrics
-        Row(
-          children: [
-            Expanded(
-              child: _buildInfoCard(
+        if (isMobile)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildInfoCard(
                 "Total Blockages",
                 "${blockages['total_blockages']}",
                 "",
                 Icons.block,
                 Colors.red,
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-                child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "On-going Blockages - ",
-                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(
-                  height: 200,
-                  child: Card(
-                    elevation: 10,
-                    child: ListView.builder(
-                      physics: AlwaysScrollableScrollPhysics(),
-                      itemCount: blockages['active_blockages'].length,
-                      itemBuilder: (context, index) {
-                        var blockage = blockages['active_blockages'][index];
-                        return ListTile(
-                          leading: Icon(Icons.warning, color: Colors.orange),
-                          title: Text(blockage["Reason"] ?? "Unknown"),
-                          subtitle: Text(
-                              "Location: ${blockage['From Street']} → ${blockage['To Street']}\n"
-                              "From: ${blockage['From Date']} | To: ${blockage['To Date']}"),
-                        );
-                      },
-                    ),
+              SizedBox(height: 16),
+              Text(
+                "On-going Blockages",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 8),
+              SizedBox(
+                height: 200,
+                child: Card(
+                  elevation: 10,
+                  child: ListView.builder(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    itemCount: blockages['active_blockages'].length,
+                    itemBuilder: (context, index) {
+                      var blockage = blockages['active_blockages'][index];
+                      return ListTile(
+                        leading: Icon(Icons.warning, color: Colors.orange),
+                        title: Text(blockage["Reason"] ?? "Unknown"),
+                        subtitle: Text(
+                            "Location: ${blockage['From Street']} → ${blockage['To Street']}\n"
+                            "From: ${blockage['From Date']} | To: ${blockage['To Date']}"),
+                      );
+                    },
                   ),
-                )
-              ],
-            )),
-          ],
-        ),
+                ),
+              )
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  "Total Blockages",
+                  "${blockages['total_blockages']}",
+                  "",
+                  Icons.block,
+                  Colors.red,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                  child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "On-going Blockages - ",
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(
+                    height: 200,
+                    child: Card(
+                      elevation: 10,
+                      child: ListView.builder(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        itemCount: blockages['active_blockages'].length,
+                        itemBuilder: (context, index) {
+                          var blockage = blockages['active_blockages'][index];
+                          return ListTile(
+                            leading: Icon(Icons.warning, color: Colors.orange),
+                            title: Text(blockage["Reason"] ?? "Unknown"),
+                            subtitle: Text(
+                                "Location: ${blockage['From Street']} → ${blockage['To Street']}\n"
+                                "From: ${blockage['From Date']} | To: ${blockage['To Date']}"),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+                ],
+              )),
+            ],
+          ),
         const SizedBox(height: 24),
 
         // Common reasons section
         Text(
           "Common Reasons for Blockages",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         _buildCommonReasons(blockages['com_reason']),
@@ -562,6 +710,7 @@ class AnalysisResultWidget extends StatelessWidget {
         // Monthly pattern chart
         Text(
           "Monthly Blockage Patterns",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 16),
         if (blockages['monthly_pattern'] != null)
@@ -664,28 +813,30 @@ class AnalysisResultWidget extends StatelessWidget {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
+    // Determine if we're on a mobile device based on screen width
+    bool isMobile = MediaQuery.of(context).size.width < 768;
+
     return Expanded(
       child: Column(
         children: [
           Text(
             "${data['street_name']}",
             style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
           ),
           Flexible(
             child: SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(isMobile ? 8.0 : 16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Traffic Volume Analysis
                     _buildSectionTitle(
                         "Traffic Volume Analysis", Icon(Icons.traffic)),
-                    _buildVolumeAnalysis(),
+                    _buildVolumeAnalysis(isMobile),
 
                     Divider(
                       thickness: 2,
@@ -695,20 +846,24 @@ class AnalysisResultWidget extends StatelessWidget {
                     // Safety and Accident Analysis
                     _buildSectionTitle(
                         "Safety Analysis", Icon(Icons.health_and_safety)),
-                    _buildSafetyAnalysis(),
+                    _buildSafetyAnalysis(isMobile),
 
                     Divider(
                       color: Colors.grey[400],
                     ),
 
                     // Trend Analysis
-                    // _buildSectionTitle("Trend Analysis"),
-                    // _buildTrendAnalysis(),
+                    _buildSectionTitle("Trend Analysis", Icon(Icons.trending_up)),
+                    _buildTrendAnalysis(isMobile),
+
+                    Divider(
+                      color: Colors.grey[400],
+                    ),
 
                     // Risk Analysis
                     _buildSectionTitle(
                         "Risk Assessment", Icon(Icons.dangerous)),
-                    _buildRiskAnalysis(),
+                    _buildRiskAnalysis(isMobile),
 
                     Divider(
                       color: Colors.grey[400],
@@ -716,16 +871,17 @@ class AnalysisResultWidget extends StatelessWidget {
 
                     // Blockage analysis
                     _buildSectionTitle("Road Blockages", Icon(Icons.block)),
-                    _buildBlockageAnalysis(),
+                    _buildBlockageAnalysis(isMobile),
 
                     Divider(
                       thickness: 2,
                       color: Colors.grey[400],
                     ),
+                    
+                    // Correlation Analysis
                     _buildSectionTitle(
                         "Correlation Analysis", Icon(Icons.grain_sharp)),
-                    _buildCorrelationAnalysis(), 
-                    _buildTrendAnalysis(), 
+                    _buildCorrelationAnalysis(),
                   ],
                 ),
               ),
