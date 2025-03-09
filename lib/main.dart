@@ -1,3 +1,5 @@
+//latest
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_heatmap/flutter_map_heatmap.dart';
@@ -6,7 +8,6 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'input.dart';
 import 'dashboard.dart';
-import 'app_bar.dart';
 import 'dart:async';
 
 void main() {
@@ -106,39 +107,215 @@ class _MapsPageState extends State<MapsPage> {
   bool _showRouteSearch =
       false; // New state variable to track which search to show
 
-  Widget _buildPredictionBox() {
-    if (_futureTrafficChange == null) return const SizedBox.shrink();
+  bool _isMobileView(BuildContext context) {
+    return MediaQuery.of(context).size.width < 600;
+  }
 
-    return Positioned(
-      top: 80, // Below the search bar
-      right: 16, // Aligned to the right
-      child: Card(
-        color: Colors.white,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min, // Only take up needed width
+  Widget _buildMobileLocationPanel() {
+  if ((_selectedOriginLocation == null && _selectedDestinationLocation == null) || !_showSidebar) {
+    return const SizedBox.shrink();
+  }
+
+  return DraggableScrollableSheet(
+    initialChildSize: 0.3,
+    minChildSize: 0.1,
+    maxChildSize: 0.6,
+    builder: (context, scrollController) {
+      return Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF1E293B),
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(16),
+            topRight: Radius.circular(16),
+          ),
+        ),
+        child: SingleChildScrollView(
+          controller: scrollController,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.timeline,
-                size: 20,
-                color: Colors.blue,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                "Traffic in 30 min: ${_futureTrafficChange!.toStringAsFixed(2)}%",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black
+              // Drag handle
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
+              // Origin details if available
+              if (_selectedOriginLocation != null)
+                _buildMobileLocationDetails('Origin', _selectedOriginLocation!, _originStreetName),
+              
+              // Destination details if available and in route search mode
+              if (_showRouteSearch && _selectedDestinationLocation != null)
+                _buildMobileLocationDetails('Destination', _selectedDestinationLocation!, _destinationStreetName),
+              
+              // Route info if available
+              if (_routeInfo.isNotEmpty)
+                _buildMobileRouteInfo(),
             ],
           ),
         ),
+      );
+    },
+  );
+}
+
+Widget _buildMobileLocationDetails(String title, Map<String, dynamic> location, String streetName) {
+  final address = location['address'] as Map<String, dynamic>;
+  
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TrafficAnalysisApp(location: location),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 142, 255, 141),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(
+                    bottomRight: Radius.circular(20),
+                  ),
+                ),
+              ),
+              child: const Icon(Icons.analytics_outlined),
+            ),
+          ],
+        ),
+        const Divider(color: Colors.grey),
+        _buildMobileDetailItem('Name', location['display_name'].toString().split(',').first),
+        if (streetName.isNotEmpty)
+          _buildMobileDetailItem('Street', streetName),
+        if (address['city'] != null)
+          _buildMobileDetailItem('City', address['city']),
+        if (address['state'] != null)
+          _buildMobileDetailItem('State', address['state']),
+        _buildMobileDetailItem('Coordinates', '${location['lat']}, ${location['lon']}'),
+      ],
+    ),
+  );
+}
+
+Widget _buildMobileDetailItem(String label, String value) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Colors.grey,
+            fontSize: 12,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 14),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildMobileRouteInfo() {
+  final distance = (_routeInfo['distance'] / 1000).toStringAsFixed(2);
+  final duration = (_routeInfo['duration'] / 60).toStringAsFixed(0);
+
+  return Container(
+    padding: const EdgeInsets.all(16),
+    margin: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Colors.black26,
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.directions_car),
+            Text('$distance km'),
+          ],
+        ),
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.access_time),
+            Text('$duration mins'),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildPredictionBox() {
+  if (_futureTrafficChange == null) return const SizedBox.shrink();
+
+  return Positioned(
+    top: _isMobileView(context) ? 80 : 80, // Adjust position for mobile
+    right: 16,
+    child: Card(
+      color: Colors.white,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.timeline,
+              size: 20,
+              color: Colors.blue,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Traffic in 30 min: ${_futureTrafficChange!.toStringAsFixed(2)}%",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black
+              ),
+            ),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              icon: const Icon(Icons.close, size: 16),
+              onPressed: () {
+                setState(() {
+                  _futureTrafficChange = null;
+                });
+              },
+            )
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   void initState() {
@@ -583,23 +760,7 @@ class _MapsPageState extends State<MapsPage> {
   //   });
   // }
 
-  Widget _buildSearchBar() {
-    return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Column(children: [
-          TextField(
-            controller: _originController,
-            onChanged: (value) => _searchLocation(value, true),
-            decoration: InputDecoration(
-              hintText: "Explore",
-              prefixIcon: const Icon(Icons.location_on),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-          if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
-        ]));
-  }
+
 
   Widget _buildLocationPanel(String title, Map<String, dynamic>? location,
       String streetName, BuildContext context) {
@@ -663,72 +824,116 @@ class _MapsPageState extends State<MapsPage> {
     );
   }
 
-  Widget _buildSidebar() {
-    final bool hasAnyLocation =
-        _selectedOriginLocation != null || _selectedDestinationLocation != null;
+bool _isSidebarCollapsed = false;
 
-    if (!_showSidebar || !hasAnyLocation) return const SizedBox.shrink();
+// Replace _buildSidebar function to add toggle button
+Widget _buildSidebar() {
+  final bool hasAnyLocation =
+      _selectedOriginLocation != null || _selectedDestinationLocation != null;
 
-    return ConstrainedBox(
-      constraints: BoxConstraints(minHeight: 400),
-      child: Positioned(
-        left: 0,
-        top: 0,
-        bottom: 0,
-        child: Card(
-            margin: const EdgeInsets.all(8),
-            child: IntrinsicHeight(
-                // Ensures height fits the content
-                child: Container(
-              width: 320, // Slightly wider to accommodate both panels
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Location Details',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => setState(() => _showSidebar = false),
-                      ),
-                    ],
-                  ),
-                  const Divider(),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        _buildLocationPanel('Origin', _selectedOriginLocation,
-                            _originStreetName, context),
-                        const Divider(),
-                        SizedBox(
-                            child: _showRouteSearch
-                                ? _buildLocationPanel(
-                                    // show only if route and destination search bar, if single search bar, dont show
-                                    'Destination',
-                                    _selectedDestinationLocation,
-                                    _destinationStreetName,
-                                    context)
-                                : null),
-                        const Divider(),
-                        SizedBox(
-                            child: _showRouteSearch ? _buildRouteInfo() : null),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ))),
+  if (!_showSidebar || !hasAnyLocation) return const SizedBox.shrink();
+
+  // If sidebar is collapsed, show only the toggle button
+  if (_isSidebarCollapsed) {
+    return Positioned(
+      left: 0,
+      top: 80,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Color(0xFF1E293B),
+          borderRadius: BorderRadius.only(
+            topRight: Radius.circular(8),
+            bottomRight: Radius.circular(8),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: IconButton(
+          icon: Icon(Icons.chevron_right),
+          onPressed: () {
+            setState(() {
+              _isSidebarCollapsed = false;
+            });
+          },
+        ),
       ),
     );
   }
 
+  return ConstrainedBox(
+    constraints: BoxConstraints(minHeight: 400),
+    child: Positioned(
+      left: 0,
+      top: 0,
+      bottom: 0,
+      child: Card(
+        margin: const EdgeInsets.all(8),
+        child: IntrinsicHeight(
+          child: Container(
+            width: 320,
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Location Details',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    Row(
+                      children: [
+                        // Add collapse button
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: () => setState(() => _isSidebarCollapsed = true),
+                          tooltip: "Collapse sidebar",
+                        ),
+                        // IconButton(
+                        //   icon: const Icon(Icons.close),
+                        //   onPressed: () => setState(() => _showSidebar = false),
+                        //   tooltip: "Close sidebar",
+                        // ),
+                      ],
+                    ),
+                  ],
+                ),
+                const Divider(),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      _buildLocationPanel('Origin', _selectedOriginLocation,
+                          _originStreetName, context),
+                      const Divider(),
+                      SizedBox(
+                          child: _showRouteSearch
+                              ? _buildLocationPanel(
+                                  'Destination',
+                                  _selectedDestinationLocation,
+                                  _destinationStreetName,
+                                  context)
+                              : null),
+                      const Divider(),
+                      SizedBox(
+                          child: _showRouteSearch ? _buildRouteInfo() : null),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
   Widget _buildDetailItem(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -885,6 +1090,25 @@ class _MapsPageState extends State<MapsPage> {
       ),
     );
   }
+
+    Widget _buildSearchBar() {
+    return Card(
+        
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(children: [
+          TextField(
+            controller: _originController,
+            onChanged: (value) => _searchLocation(value, true),
+            decoration: InputDecoration(
+              hintText: "Explore",
+              prefixIcon: const Icon(Icons.location_on),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
+            ),
+          ),
+          if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
+        ]));
+  }
   
 
   Widget _buildSuggestions(bool isOrigin) {
@@ -949,9 +1173,11 @@ class _MapsPageState extends State<MapsPage> {
                       TextField(
                         controller: _originController,
                         onChanged: (value) => _searchLocation(value, true),
+                        
                         decoration: InputDecoration(
                           hintText: "Enter Origin",
                           prefixIcon: const Icon(Icons.location_on),
+                          
                           border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8)),
                         ),
@@ -1016,9 +1242,12 @@ class _MapsPageState extends State<MapsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(),
-      body: Stack(children: [
+  final bool isMobile = _isMobileView(context);
+  
+  return Scaffold(
+    //appBar: isMobile ? null : CustomAppBar(),
+    body: Stack(
+      children: [
         Column(
           children: [
             _buildToggleableSearch(),
@@ -1048,7 +1277,6 @@ class _MapsPageState extends State<MapsPage> {
                             0.9: Colors.red, // Very high intensity
                           }),
                         ),
-                        
                       if (_showTraffic)
                         PolylineLayer(
                           polylines: _streetTraffic.entries
@@ -1059,26 +1287,23 @@ class _MapsPageState extends State<MapsPage> {
                                     points: [
                                       _routePoints[index],
                                       _routePoints[index + 1]
-                                    ], // Line segment
+                                    ],
                                     strokeWidth: 5.0,
-                                    color: entry.value, // Traffic color
+                                    color: entry.value,
                                   );
                                 }
-                                return null; // Null if the index is out of bounds
+                                return null;
                               })
                               .whereType<Polyline>()
-                              .toList(), // ✅ Fix: Removes nulls & ensures correct type
+                              .toList(),
                         ),
-                      if (_showTrafficAll &&
-                          _streetTraffic.isNotEmpty) // Add null check
+                      if (_showTrafficAll && _streetTraffic.isNotEmpty)
                         PolylineLayer(
                           polylines: _streetTraffic.entries.map((entry) {
                             return Polyline(
-                              points: [
-                                entry.key
-                              ], // Single point for each traffic location
-                              strokeWidth: 8.0, // Make it more visible
-                              color: entry.value.withOpacity(0.7), // Add some transparency
+                              points: [entry.key],
+                              strokeWidth: 8.0,
+                              color: entry.value.withOpacity(0.7),
                             );
                           }).toList(),
                         ),
@@ -1091,7 +1316,6 @@ class _MapsPageState extends State<MapsPage> {
                           ),
                         ],
                       ),
-                      
                       MarkerLayer(
                         markers: [
                           if (_origin != null)
@@ -1118,7 +1342,8 @@ class _MapsPageState extends State<MapsPage> {
                     ],
                   ),
                   _buildMapOptionsMenu(),
-                  _buildSidebar(),
+                  // Conditionally show sidebar based on device type
+                  if (!isMobile) _buildSidebar(),
                   _buildPredictionBox(),
                   if (_isLoading)
                     const Center(
@@ -1129,27 +1354,30 @@ class _MapsPageState extends State<MapsPage> {
             ),
           ],
         ),
-      ]),
-      floatingActionButton: _showRouteSearch
-          ? FloatingActionButton(
-              onPressed: () async {
-                try {
-                  await _loadRoute();
-                  if (_routePoints.isNotEmpty) {
-                    await Future.wait([
-                      _fetchRouteTraffic(),
-                      _fetchFutureTrafficChange(),
-                    ]);
-                  }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("Error: $e")),
-                  );
+        // Add mobile location panel at bottom of screen
+        if (isMobile) _buildMobileLocationPanel(),
+      ],
+    ),
+    floatingActionButton: _showRouteSearch
+        ? FloatingActionButton(
+            onPressed: () async {
+              try {
+                await _loadRoute();
+                if (_routePoints.isNotEmpty) {
+                  await Future.wait([
+                    _fetchRouteTraffic(),
+                    _fetchFutureTrafficChange(),
+                  ]);
                 }
-              },
-              child: const Icon(Icons.directions),
-            )
-          : null,
-    );
-  }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Error: $e")),
+                );
+              }
+            },
+            child: const Icon(Icons.directions),
+          )
+        : null,
+  );
+}
 }
