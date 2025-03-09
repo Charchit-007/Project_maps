@@ -72,7 +72,7 @@ def street_analysis():
     # filter the datasets for the input street, so processing kum ho jayega
     street_data = df[df["street"].str.upper() == street.upper()]  # Case insensitive            # Volume data
     street_acc = df_acc[df_acc["Street Name"].str.upper() == street.upper()]        # Accidents data
-    street_speed = speeds[speeds["street_name"].str.upper() == street.upper()]        # Speeds dataset (Tom Tom august 24)
+    # street_speed = speeds[speeds["street_name"].str.upper() == street.upper()]        # Speeds dataset (Tom Tom august 24)
 
     street_name = street.upper()
     boro = street_data['Boro'].unique()         # take the first boro
@@ -278,70 +278,70 @@ def street_analysis():
 
 
 
-    if not street_speed.empty:
-    #     return jsonify({"error": "No Speed data found for this street"}), 404
-    # else:
-        # Get average speeds and volumes by hour
-        hourly_volume = street_data.groupby('HH')['Vol'].mean().reset_index()
+    # if not street_speed.empty:
+    # #     return jsonify({"error": "No Speed data found for this street"}), 404
+    # # else:
+    #     # Get average speeds and volumes by hour
+    #     hourly_volume = street_data.groupby('HH')['Vol'].mean().reset_index()
         
-        # Calculate speed to volume ratio (this will require some data matching logic)
-        avg_speed = street_speed['average_speed'].mean()
-        speed_limit = street_speed['speed_limit'].mean() if 'speed_limit' in street_speed.columns else "Unknown"
+    #     # Calculate speed to volume ratio (this will require some data matching logic)
+    #     avg_speed = street_speed['average_speed'].mean()
+    #     speed_limit = street_speed['speed_limit'].mean() if 'speed_limit' in street_speed.columns else "Unknown"
         
-        # Plot average speed vs volume
-        plt.figure(figsize=(10, 6))
-        sns.lineplot(data=hourly_volume, x='HH', y='Vol', marker='o', label='Volume')
-        plt.title(f"Traffic Volume vs Hour for {street}")
-        plt.xlabel("Hour of Day")
-        plt.ylabel("Average Volume")
-        plt.xticks(range(0, 24))
+    #     # Plot average speed vs volume
+    #     plt.figure(figsize=(10, 6))
+    #     sns.lineplot(data=hourly_volume, x='HH', y='Vol', marker='o', label='Volume')
+    #     plt.title(f"Traffic Volume vs Hour for {street}")
+    #     plt.xlabel("Hour of Day")
+    #     plt.ylabel("Average Volume")
+    #     plt.xticks(range(0, 24))
         
-        if avg_speed:
-            # Add a horizontal line for average speed
-            plt.axhline(y=avg_speed, color='r', linestyle='--', label=f'Avg Speed: {avg_speed:.1f} mph')
+    #     if avg_speed:
+    #         # Add a horizontal line for average speed
+    #         plt.axhline(y=avg_speed, color='r', linestyle='--', label=f'Avg Speed: {avg_speed:.1f} mph')
             
-        plt.legend()
+    #     plt.legend()
         
-        img_io = io.BytesIO()
-        plt.savefig(img_io, format="png", bbox_inches="tight")
-        img_io.seek(0)
-        speed_volume_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
-        plt.close()
+    #     img_io = io.BytesIO()
+    #     plt.savefig(img_io, format="png", bbox_inches="tight")
+    #     img_io.seek(0)
+    #     speed_volume_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
+    #     plt.close()
 
-        # --------------------------------------
+    #     # --------------------------------------
 
-        # street_data['date'] = pd.to_datetime(street_data['date'])
-        # df_acc['Date'] = pd.to_datetime(df_acc['Date'])
+    #     # street_data['date'] = pd.to_datetime(street_data['date'])
+    #     # df_acc['Date'] = pd.to_datetime(df_acc['Date'])
         
-        # # Monthly volume trends
-        # monthly_volumes = street_data.groupby(pd.Grouper(key='date', freq='M'))['Vol'].mean().reset_index()
-        # monthly_volumes = monthly_volumes.rename(columns={'date': 'Month', 'Vol': 'Average Volume'})
+    #     # # Monthly volume trends
+    #     # monthly_volumes = street_data.groupby(pd.Grouper(key='date', freq='M'))['Vol'].mean().reset_index()
+    #     # monthly_volumes = monthly_volumes.rename(columns={'date': 'Month', 'Vol': 'Average Volume'})
         
-        # # Monthly accident trends
-        # monthly_accidents = street_acc.groupby(pd.Grouper(key='Date', freq='M')).size().reset_index(name='Accident Count')
+    #     # # Monthly accident trends
+    #     # monthly_accidents = street_acc.groupby(pd.Grouper(key='Date', freq='M')).size().reset_index(name='Accident Count')
         
-        # # Plot the trends
-        # fig, ax1 = plt.subplots(figsize=(12, 6))
+    #     # # Plot the trends
+    #     # fig, ax1 = plt.subplots(figsize=(12, 6))
         
-        # ax1.set_xlabel('Month')
-        # ax1.set_ylabel('Average Volume', color='tab:blue')
-        # ax1.plot(monthly_volumes['Month'], monthly_volumes['Average Volume'], color='tab:blue', marker='o')
-        # ax1.tick_params(axis='y', labelcolor='tab:blue')
+    #     # ax1.set_xlabel('Month')
+    #     # ax1.set_ylabel('Average Volume', color='tab:blue')
+    #     # ax1.plot(monthly_volumes['Month'], monthly_volumes['Average Volume'], color='tab:blue', marker='o')
+    #     # ax1.tick_params(axis='y', labelcolor='tab:blue')
         
-        # # Create a second y-axis
-        # ax2 = ax1.twinx()
-        # ax2.set_ylabel('Accident Count', color='tab:red')
-        # ax2.plot(monthly_accidents['Date'], monthly_accidents['Accident Count'], color='tab:red', marker='x')
-        # ax2.tick_params(axis='y', labelcolor='tab:red')
+    #     # # Create a second y-axis
+    #     # ax2 = ax1.twinx()
+    #     # ax2.set_ylabel('Accident Count', color='tab:red')
+    #     # ax2.plot(monthly_accidents['Date'], monthly_accidents['Accident Count'], color='tab:red', marker='x')
+    #     # ax2.tick_params(axis='y', labelcolor='tab:red')
         
-        # plt.title(f"Volume and Accident Trends for {street}")
-        # fig.tight_layout()
+    #     # plt.title(f"Volume and Accident Trends for {street}")
+    #     # fig.tight_layout()
         
-        # img_io = io.BytesIO()
-        # plt.savefig(img_io, format="png", bbox_inches="tight")
-        # img_io.seek(0)
-        # trend_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
-        # plt.close()
+    #     # img_io = io.BytesIO()
+    #     # plt.savefig(img_io, format="png", bbox_inches="tight")
+    #     # img_io.seek(0)
+    #     # trend_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
+    #     # plt.close()
 
 
 

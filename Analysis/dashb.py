@@ -50,22 +50,23 @@ def traffic(df, df_acc):
         # Traffic by 3-hour intervals per borough (Now Separate Graphs)
         traffic_data["Hour_Group"] = (traffic_data["HH"] // 3) * 3
         boro_hourly_traffic = {}
-        boro_hourly_graphs = {}
+        # boro_hourly_graphs = {}
 
         for boro in boroughs:
             boro_df = traffic_data[traffic_data["Boro"] == boro]
             hourly_counts = boro_df.groupby("Hour_Group")["Vol"].sum().to_dict()
             boro_hourly_traffic[boro] = hourly_counts
+            print("Hourly counts  ----- ",boro_hourly_traffic)
 
-            fig, ax = plt.subplots()
-            ax.bar(hourly_counts.keys(), hourly_counts.values(), color="green")
-            ax.set_xlabel("Hour Group (Every 3 Hours)")
-            ax.set_ylabel("Traffic Volume")
-            ax.set_title(f"Traffic by 3-Hour Intervals in {boro}")
+            # fig, ax = plt.subplots()
+            # ax.bar(hourly_counts.keys(), hourly_counts.values(), color="green")
+            # ax.set_xlabel("Hour Group (Every 3 Hours)")
+            # ax.set_ylabel("Traffic Volume")
+            # ax.set_title(f"Traffic by 3-Hour Intervals in {boro}")
 
-            graph_base64 = generate_base64_plot(fig)
-            plt.close(fig)
-            boro_hourly_graphs[boro] = graph_base64
+            # graph_base64 = generate_base64_plot(fig)
+            # plt.close(fig)
+            # boro_hourly_graphs[boro] = graph_base64
 
         # Convert date column to datetime
         collision_data["Date"] = pd.to_datetime(collision_data["Date"])
@@ -105,7 +106,7 @@ def traffic(df, df_acc):
             "Borough-wise Congestion": boro_congestion,
             "Hourly Traffic Volume": hourly_traffic,
             "Traffic by 3-Hour Intervals": boro_hourly_traffic,
-            "Traffic by 3-Hour Intervals Graphs": boro_hourly_graphs,
+            # "Traffic by 3-Hour Intervals Graphs": boro_hourly_graphs,
             "Top 3 Busiest Hours": busiest_hours,
             "Top 3 Busiest Hours Graphs": busiest_hours_graphs,
             "Top 5 Dangerous Streets": accident_hotspots,

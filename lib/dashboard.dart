@@ -1,8 +1,6 @@
+// ignore_for_file: curly_braces_in_flow_control_structures
+
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'package:fl_chart/fl_chart.dart';
-=======
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:intl/intl.dart';
@@ -29,39 +27,20 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Fetch traffic data with timeout and log request time
   Future<void> fetchTrafficData() async {
-<<<<<<< HEAD
-    // final startTime = DateTime.now();
-
-=======
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
     try {
       final response = await http
           .get(Uri.parse('http://127.0.0.1:5000/traffic-analysis'))
           .timeout(const Duration(seconds: 60));
 
-<<<<<<< HEAD
-      // final endTime = DateTime.now();
-      // print('Request Time: ${endTime.difference(startTime).inMilliseconds} ms');
-
-      if (response.statusCode == 200) {
-        // agar response succesfullhai, status 200 return hota hai
-        setState(() {
-          trafficData = json.decode(response.body);
-          // jsonify encodes karke bhejta hai, and yaha we decode the response
-          isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load traffic data');
-=======
       if (response.statusCode == 200) {
         setState(() {
           trafficData = json.decode(response.body);
           isLoading = false;
         });
-        print('Traffic data loaded successfully: ${trafficData?.keys.toList()}');
+        print(
+            'Traffic data loaded successfully: ${trafficData?.keys.toList()}');
       } else {
         throw Exception('Failed to load traffic data: ${response.statusCode}');
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
       }
     } catch (e) {
       setState(() {
@@ -75,25 +54,6 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF111826),
-<<<<<<< HEAD
-      body: Column(
-        children: [
-          // App Bar with Navigation
-          _buildAppBar(),
-
-          // Main Content
-          Expanded(
-            child:
-                isLoading // if data nhi aya, isloading true hoga; once data or even error aya, 'finally' wale code se isLoading false ho jayega
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: Color(0xFF8B5CF6),
-                        ),
-                      )
-                    : _buildDashboardContent(),
-          ),
-        ],
-=======
       body: SafeArea(
         child: Column(
           children: [
@@ -112,7 +72,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
           ],
         ),
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
       ),
     );
   }
@@ -120,20 +79,14 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildAppBar() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       decoration: const BoxDecoration(
         color: Color(0xFF1E293B),
         boxShadow: [
           BoxShadow(
             color: Colors.black26,
-<<<<<<< HEAD
-            blurRadius: 10, // higher - increases depth effect
-            offset:
-                Offset(0, 9), // x, y axis with respect to the parent(container)
-=======
             blurRadius: 10,
-            offset: Offset(0, 9),
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
+            offset: Offset(0, 10),
           ),
         ],
       ),
@@ -143,16 +96,12 @@ class _DashboardPageState extends State<DashboardPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.analytics_outlined,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                child: SizedBox(
+                    height: 50,
+                    child: Image.asset(
+                      'assets/app_logo.png',
+                      fit: BoxFit.cover,
+                    )),
               ),
               const SizedBox(width: 16),
               const Text(
@@ -194,27 +143,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-<<<<<<< HEAD
-  // Widget _navButton(String title, {bool isSelected = false}) {
-  //   return Container(
-  //     margin: const EdgeInsets.symmetric(horizontal: 8),
-  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-  //     decoration: BoxDecoration(
-  //       color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
-  //       borderRadius: BorderRadius.circular(8),
-  //     ),
-  //     child: Text(
-  //       title,
-  //       style: TextStyle(
-  //         color: isSelected ? Colors.white : Colors.white70,
-  //         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-  //       ),
-  //     ),
-  //   );
-  // }
-
-=======
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
   Widget _buildDashboardContent() {
     if (trafficData == null) {
       return const Center(
@@ -224,187 +152,14 @@ class _DashboardPageState extends State<DashboardPage> {
         ),
       );
     }
-<<<<<<< HEAD
-    // if data not empty ->
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Main Content Area (70%)
-        Expanded(
-          // diff between expanded and flexible is
-          // flexible lets child take how much ever space they need
-          // expanded forces child to take all avail width
-          flex: 5, // how much space it should take, with resp to its siblings
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildBoroughSummary(),
-                const SizedBox(height: 24),
-                _buildSection(
-                  title: "Borough-wise Traffic Analysis",
-                  child: _buildBarChartCard(
-                      trafficData!['Borough-wise Congestion']),
-                ),
-                const SizedBox(height: 24),
-                _buildSection(
-                  title: "Peak Traffic Hours",
-                  child:
-                      _buildBarChartCard(trafficData!['Hourly Traffic Volume']),
-                ),
-                const SizedBox(height: 24),
-                _buildSection(
-                  title: "Traffic by 3-Hour Intervals",
-                  child: _buildBoroughIntervalCharts(),
-                ),
-                const SizedBox(height: 24),
-                _buildSection(
-                  title: "Most Common Causes of Accidents",
-                  child: _buildAnalysisCard(
-                      trafficData!['Most Common Causes of Accidents']),
-                ),
-                const SizedBox(height: 24),
-                _buildSection(
-                  title: "Accidents by Vehicle Type",
-                  child: _buildAnalysisCard(
-                      trafficData!['Accidents by Vehicle Type']),
-                ),
-              ],
-            ),
-          ),
-        ),
 
-        // Right Sidebar (30%)
-        Expanded(
-          flex: 3,
-          child: SingleChildScrollView(
-            // Wrap the entire sidebar
-            child: Container(
-              margin: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "State of New York",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            "Routex",
-                            style: TextStyle(
-                              color: Color(0xFF8B5CF6),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  /// Keep Image and Analysis Button
-                  SizedBox(
-                    height: 250, // Adjust height to fit content properly
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(16),
-                        bottomRight: Radius.circular(16),
-                      ),
-                      child: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.asset(
-                            'assets/img1.jpg',
-                            fit: BoxFit.cover,
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  Colors.black.withOpacity(0.7),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            bottom: 16,
-                            left: 16,
-                            right: 16,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const SizedBox(height: 12),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => MapsPage(),
-                                      ),
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF8B5CF6),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                      horizontal: 20,
-                                    ),
-                                  ),
-                                  child: const Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text("Street Analysis"),
-                                      SizedBox(width: 8),
-                                      Icon(Icons.arrow_forward, size: 16),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildDangerousStreetsSection(), // This section will also be scrollable
-                ],
-              ),
-=======
-    
     // Check if we're on a mobile device
     final screenWidth = MediaQuery.of(context).size.width;
     bool isMobile = screenWidth < 800;
-    
+
     // Log screen information for debugging
     print('Screen width: $screenWidth, isMobile: $isMobile');
-    
+
     if (isMobile) {
       // Mobile layout (ladder form)
       return SingleChildScrollView(
@@ -417,16 +172,14 @@ class _DashboardPageState extends State<DashboardPage> {
             _buildSection(
               title: "Borough-wise Traffic Analysis",
               child: _buildSyncfusionChart(
-                  trafficData!['Borough-wise Congestion'], 
-                  ChartType.column,
+                  trafficData!['Borough-wise Congestion'], ChartType.column,
                   isMobile: true),
             ),
             const SizedBox(height: 24),
             _buildSection(
               title: "Peak Traffic Hours",
               child: _buildSyncfusionChart(
-                  trafficData!['Hourly Traffic Volume'], 
-                  ChartType.line,
+                  trafficData!['Hourly Traffic Volume'], ChartType.line,
                   isMobile: true),
             ),
             const SizedBox(height: 24),
@@ -443,8 +196,8 @@ class _DashboardPageState extends State<DashboardPage> {
             const SizedBox(height: 24),
             _buildSection(
               title: "Accidents by Vehicle Type",
-              child: _buildAnalysisCard(
-                  trafficData!['Accidents by Vehicle Type']),
+              child:
+                  _buildAnalysisCard(trafficData!['Accidents by Vehicle Type']),
             ),
             const SizedBox(height: 24),
             _buildDangerousStreetsSection(),
@@ -475,14 +228,14 @@ class _DashboardPageState extends State<DashboardPage> {
                       _buildSection(
                         title: "Borough-wise Traffic Analysis",
                         child: _buildSyncfusionChart(
-                            trafficData!['Borough-wise Congestion'], 
+                            trafficData!['Borough-wise Congestion'],
                             ChartType.column),
                       ),
                       const SizedBox(height: 24),
                       _buildSection(
                         title: "Peak Traffic Hours",
                         child: _buildSyncfusionChart(
-                            trafficData!['Hourly Traffic Volume'], 
+                            trafficData!['Hourly Traffic Volume'],
                             ChartType.line),
                       ),
                       const SizedBox(height: 24),
@@ -514,7 +267,8 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Container(
                 color: const Color(0xFF111826), // Debug color
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(top: 24, right: 24, bottom: 24),
+                  padding:
+                      const EdgeInsets.only(top: 24, right: 24, bottom: 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -560,8 +314,8 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFF8B5CF6).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(20),
@@ -577,7 +331,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ],
           ),
         ),
-
         SizedBox(
           height: 250,
           child: ClipRRect(
@@ -645,7 +398,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
               ],
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
             ),
           ),
         ),
@@ -653,17 +405,10 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildBoroughSummary() {
-    // Extract borough data
-    final boroughData = trafficData!['Borough-wise Congestion'] as Map<String,
-        dynamic>; // !(null assertion operator) says that the traffic data is surely NOT NULL, which avoids compile error
-    // ! use only when youa re sure data is not null
-=======
   Widget _buildBoroughSummary({bool isMobile = false}) {
     // Extract borough data
-    final boroughData = trafficData!['Borough-wise Congestion'] as Map<String, dynamic>;
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
+    final boroughData =
+        trafficData!['Borough-wise Congestion'] as Map<String, dynamic>;
 
     if (boroughData.isEmpty) {
       return const SizedBox.shrink();
@@ -672,52 +417,11 @@ class _DashboardPageState extends State<DashboardPage> {
     // Get top 3 boroughs
     final sortedBoroughs = boroughData.entries.toList()
       ..sort((a, b) => (b.value as num).compareTo(a.value as num));
-<<<<<<< HEAD
-    // .entries converts into iterable entry with key and values --> .list converts to list
-    // as sort is avail only for list
-    // sort works in place
-    final topBoroughs = sortedBoroughs.take(3).toList();
-
-    return Row(
-      children: topBoroughs.asMap().entries.map((entry) {
-        // this runs a loop for each item in the top boroughs list
-        final index = entry.key;
-        final borough = entry.value.key;
-        final volume = entry.value.value;
-
-        IconData icon;
-        Color color;
-        String label;
-
-        if (index == 0) {
-          // top congested
-          icon = Icons.warning_rounded;
-          color = const Color(0xFFEF4444);
-          label = "Highest Traffic";
-        } else if (index == 1) {
-          icon = Icons.warning_rounded;
-          color = const Color(0xFFF59E0B);
-          label = "Heavy Traffic";
-        } else {
-          icon = Icons.warning_rounded;
-          color = const Color(0xFF10B981);
-          label = "Moderate Traffic";
-        }
-
-        return _buildMetricCard(
-          title: borough,
-          value: volume,
-          subtext: label,
-          icon: icon,
-          color: color,
-        );
-      }).toList(),
-=======
     final topBoroughs = sortedBoroughs.take(3).toList();
 
     // Fixed layout for both mobile and desktop - display all in one row
     return Container(
-      width: double.infinity, 
+      width: double.infinity,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: topBoroughs.asMap().entries.map((entry) {
@@ -758,7 +462,6 @@ class _DashboardPageState extends State<DashboardPage> {
           );
         }).toList(),
       ),
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
     );
   }
 
@@ -770,31 +473,6 @@ class _DashboardPageState extends State<DashboardPage> {
     required String subtext,
     required IconData icon,
     required Color color,
-<<<<<<< HEAD
-  }) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(right: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-=======
     bool isMobile = false,
   }) {
     // Removed fixed width to allow cards to expand based on parent constraints
@@ -804,11 +482,11 @@ class _DashboardPageState extends State<DashboardPage> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Colors.black12,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -820,25 +498,11 @@ class _DashboardPageState extends State<DashboardPage> {
             children: [
               Flexible(
                 child: Text(
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
                   title,
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 14,
                   ),
-<<<<<<< HEAD
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    icon,
-                    color: color,
-                    size: 18,
-=======
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -894,59 +558,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         ? const Color(0xFF10B981)
                         : const Color(0xFFEF4444),
                     fontWeight: FontWeight.bold,
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
                   ),
                 ),
               ],
             ),
-<<<<<<< HEAD
-            const SizedBox(height: 12),
-            Text(
-              formatNumberShort(value as int),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              subtext,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-              ),
-            ),
-            if (change != null)
-              Row(
-                children: [
-                  Icon(
-                    isPositive
-                        ? Icons.arrow_upward_rounded
-                        : Icons.arrow_downward_rounded,
-                    color: isPositive
-                        ? const Color(0xFF10B981)
-                        : const Color(0xFFEF4444),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    change,
-                    style: TextStyle(
-                      color: isPositive
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFFEF4444),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-          ],
-        ),
-=======
         ],
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
       ),
     );
   }
@@ -971,55 +587,13 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-<<<<<<< HEAD
-  Widget _buildBarChartCard(Map<String, dynamic>? data) {
-=======
   // SyncFusion chart implementation with updated chart types and tooltip customization
-  Widget _buildSyncfusionChart(Map<String, dynamic>? data, ChartType chartType, {bool isMobile = false}) {
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
+  Widget _buildSyncfusionChart(Map<String, dynamic>? data, ChartType chartType,
+      {bool isMobile = false}) {
     if (data == null || data.isEmpty) {
       return _buildEmptyCard("No chart data available");
     }
 
-<<<<<<< HEAD
-    List<BarChartGroupData> barGroups = [];
-    List<String> titles = [];
-
-    // Find the maximum value for scaling
-    double maxValue = 0;
-    data.forEach((key, value) {
-      if ((value as num).toDouble() > maxValue) {
-        maxValue = (value).toDouble();
-      }
-    });
-
-    int index = 0;
-    data.forEach((key, value) {
-      titles.add(key);
-      barGroups.add(
-        BarChartGroupData(
-          x: index,
-          barRods: [
-            BarChartRodData(
-              toY: (value as num).toDouble(),
-              color: const Color(0xFF8B5CF6),
-              width: 16,
-              borderRadius: BorderRadius.circular(2),
-              backDrawRodData: BackgroundBarChartRodData(
-                show: true,
-                toY: maxValue * 1.1, // Add 10% padding at the top
-                color: const Color(0xFF2D3748),
-              ),
-            )
-          ],
-        ),
-      );
-      index++;
-    });
-    List<FlSpot> dataPoints = barGroups.map((bar) {
-      return FlSpot(bar.x.toDouble(), bar.barRods.first.toY);
-    }).toList();
-=======
     // Convert data to ChartData format
     List<ChartData> chartData = [];
     data.forEach((key, value) {
@@ -1027,19 +601,26 @@ class _DashboardPageState extends State<DashboardPage> {
       String displayKey = key;
       if (isMobile && key.length > 10) {
         // Abbreviate names for small screens
-        if (key == "Manhattan") displayKey = "Man";
-        else if (key == "Brooklyn") displayKey = "Bklyn";
-        else if (key == "Queens") displayKey = "Qns";
-        else if (key == "Bronx") displayKey = "Bx";
-        else if (key == "Staten Island") displayKey = "SI";
-        else displayKey = key.substring(0, 6) + "..."; // Fallback abbreviation
+        if (key == "Manhattan")
+          displayKey = "Man";
+        else if (key == "Brooklyn")
+          displayKey = "Bklyn";
+        else if (key == "Queens")
+          displayKey = "Qns";
+        else if (key == "Bronx")
+          displayKey = "Bx";
+        else if (key == "Staten Island")
+          displayKey = "SI";
+        else
+          // ignore: prefer_interpolation_to_compose_strings
+          displayKey = key.substring(0, 6) + "..."; // Fallback abbreviation
       }
       chartData.add(ChartData(key, displayKey, (value as num).toDouble()));
     });
 
     // Calculate maximum bars that can fit well
-    double maxBarWidth = 0.4; // Adjust column width (smaller value = thinner bars)
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
+    double maxBarWidth =
+        0.4; // Adjust column width (smaller value = thinner bars)
 
     return Container(
       height: 350,
@@ -1048,192 +629,6 @@ class _DashboardPageState extends State<DashboardPage> {
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
       ),
-<<<<<<< HEAD
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 30),
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                barTouchData: BarTouchData(
-                  touchTooltipData: BarTouchTooltipData(
-                    tooltipBgColor:
-                        Colors.black54, // Background color for better contrast
-                    tooltipPadding: const EdgeInsets.all(8),
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      return BarTooltipItem(
-                        '${rod.toY.toInt()}', // Show the Y value
-                        const TextStyle(
-                          color:
-                              Colors.white, // Set tooltip text color to white
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                alignment: BarChartAlignment.spaceAround,
-                barGroups: barGroups,
-                maxY: maxValue * 1.1, // Add 10% padding at the top
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: Colors.black,
-                    strokeWidth: 1,
-                    dashArray: [5, 5],
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  topTitles: AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: false,
-                      reservedSize: 50, // Increase this value for more space
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value >= titles.length || value < 0) {
-                          return const SizedBox();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            titles[value.toInt()],
-                            style: const TextStyle(
-                              color: Colors.white60,
-                              fontSize: 12,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}',
-                          style: const TextStyle(
-                            color: Colors.white60,
-                            fontSize: 12,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                backgroundColor: Colors.transparent,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-//   return Container(
-//   height: 350,
-//   padding: const EdgeInsets.all(20),
-//   decoration: BoxDecoration(
-//     color: const Color(0xFF1E293B),
-//     borderRadius: BorderRadius.circular(16),
-//   ),
-//   child: LineChart(
-//     LineChartData(
-//       minY: 0,
-//       maxY: maxValue * 1.1, // Add padding to top
-//       gridData: FlGridData(
-//         show: true,
-//         drawVerticalLine: false,
-//         getDrawingHorizontalLine: (value) => FlLine(
-//           color: Colors.black,
-//           strokeWidth: 1,
-//           dashArray: [5, 5],
-//         ),
-//       ),
-//       borderData: FlBorderData(show: false),
-//       titlesData: FlTitlesData(
-//         show: true,
-//         topTitles: AxisTitles(
-//           sideTitles: SideTitles(showTitles: false),
-//         ),
-//         rightTitles: AxisTitles(
-//           sideTitles: SideTitles(
-//             showTitles: true,
-//             reservedSize: 50, // Adjusted for more space
-//           ),
-//         ),
-//         bottomTitles: AxisTitles(
-//           sideTitles: SideTitles(
-//             showTitles: true,
-//             getTitlesWidget: (value, meta) {
-//               if (value >= titles.length || value < 0) {
-//                 return const SizedBox();
-//               }
-//               return Padding(
-//                 padding: const EdgeInsets.only(top: 8.0),
-//                 child: Text(
-//                   titles[value.toInt()],
-//                   style: const TextStyle(
-//                     color: Colors.white60,
-//                     fontSize: 12,
-//                   ),
-//                 ),
-//               );
-//             },
-//           ),
-//         ),
-//         leftTitles: AxisTitles(
-//           sideTitles: SideTitles(
-//             showTitles: true,
-//             reservedSize: 40,
-//             getTitlesWidget: (value, meta) {
-//               return Text(
-//                 '${value.toInt()}',
-//                 style: const TextStyle(
-//                   color: Colors.white60,
-//                   fontSize: 12,
-//                 ),
-//               );
-//             },
-//           ),
-//         ),
-//       ),
-//       lineBarsData: [
-//         LineChartBarData(
-//               spots: dataPoints, // Your converted data
-//           isCurved: true,
-//           color: Colors.blueAccent,
-//           barWidth: 3,
-//           isStrokeCapRound: true,
-//           belowBarData: BarAreaData(
-//             show: true,
-//             color: Colors.blueAccent.withOpacity(0.3),
-//           ),
-//           dotData: FlDotData(show: true), // Show dots on line
-//         ),
-//       ],
-//     ),
-//   ),
-// );
-//   }
-
-  Widget _buildBoroughIntervalCharts() {
-    final intervalGraphsData =
-        trafficData!['Traffic by 3-Hour Intervals Graphs']
-            as Map<String, dynamic>;
-=======
       child: SfCartesianChart(
         primaryXAxis: CategoryAxis(
           labelStyle: const TextStyle(color: Colors.white60),
@@ -1252,9 +647,10 @@ class _DashboardPageState extends State<DashboardPage> {
         tooltipBehavior: TooltipBehavior(
           enable: true,
           // Remove "Series: " text from tooltip
-          format: 'point.x: point.y', 
+          format: 'point.x: point.y',
           // Custom tooltip builder if needed
-          builder: (dynamic data, dynamic point, dynamic series, int pointIndex, int seriesIndex) {
+          builder: (dynamic data, dynamic point, dynamic series, int pointIndex,
+              int seriesIndex) {
             ChartData chartPoint = data;
             return Container(
               padding: const EdgeInsets.all(10),
@@ -1315,9 +711,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildBoroughIntervalCharts() {
-    final intervalGraphsData = trafficData!['Traffic by 3-Hour Intervals Graphs']
-        as Map<String, dynamic>;
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
+    final intervalGraphsData =
+        trafficData!['Traffic by 3-Hour Intervals'] as Map<String, dynamic>;
 
     if (intervalGraphsData.isEmpty) {
       return _buildEmptyCard("No interval data available");
@@ -1329,69 +724,108 @@ class _DashboardPageState extends State<DashboardPage> {
         color: const Color(0xFF1E293B),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: intervalGraphsData.entries.map((entry) {
-          final borough = entry.key;
-          final base64Image = entry.value;
+      child: DefaultTabController(
+        length: intervalGraphsData.length,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TabBar(
+              isScrollable: true,
+              tabs: intervalGraphsData.keys
+                  .map((borough) => Tab(text: borough))
+                  .toList(),
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white60,
+              indicatorColor: Colors.blue,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 400, // Fixed height for the chart area
+              child: TabBarView(
+                children: intervalGraphsData.entries.map((entry) {
+                  final borough = entry.key; // boro
+                  final hourData = (entry.value as Map<String, dynamic>)
+                      .entries // value are the list(json) of top 5 streets for a boro
+                      .map((e) => BarData(
+                          e.key,
+                          int.parse(e.value
+                              .toString()))) // e is each street inside the value(upar wala), storing the street and its count inside a BarData custom object
+                      .toList();
+                  // converts each street entry into a BarData object.
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.location_on,
-                      color: Color(0xFF8B5CF6),
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      borough,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
+                  // return Padding(
+                  //   padding: const EdgeInsets.all(16),
+                  //   child: SfCartesianChart(
+                  //     primaryXAxis:
+                  //         CategoryAxis(), // meaning it will display names of streets instead of numerical values.
+                  //     title: ChartTitle(text: '$borough'),
+                  //     series: <CartesianSeries<BarData, String>>[
+                  //       BarSeries<BarData, String>(
+                  //         dataSource: streetsData,
+                  //         xValueMapper: (BarData data, _) => data
+                  //             .street, // custom object se fetching street name and its count
+                  //         yValueMapper: (BarData data, _) => data.count,
+                  //         color: const Color(0xFF8B5CF6,
+                  //       )
+                  //   )],
+                  //   ),
+                  // );
+                  return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SfCartesianChart(
+                        title: ChartTitle(text: '$borough'),
+                        primaryXAxis: const CategoryAxis(
+                          labelStyle: TextStyle(color: Colors.white60),
+                          majorGridLines: MajorGridLines(width: 0),
+                        ),
+                        primaryYAxis: NumericAxis(
+                          labelStyle: const TextStyle(color: Colors.white60),
+                          majorGridLines: const MajorGridLines(
+                            width: 1,
+                            color: Colors.grey,
+                            dashArray: <double>[5, 5],
+                          ),
+                          numberFormat: NumberFormat
+                              .compact(), // Uses shortform like 20M, 30M
+                        ),
+                        tooltipBehavior: TooltipBehavior(
+                          enable: true,
+                          // Remove "Series: " text from tooltip
+                          format: 'point.x: point.y',
+                          // Custom tooltip builder if needed
+                          builder: (dynamic data, dynamic point, dynamic series,
+                              int pointIndex, int seriesIndex) {
+                            BarData chartPoint = data;
+                            return Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2D3748),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                '${chartPoint.street}: ${chartPoint.count.toInt()}',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            );
+                          },
+                        ),
+                        series: <CartesianSeries<BarData, String>>[
+                          AreaSeries<BarData, String>(
+                            dataSource: hourData,
+                            xValueMapper: (BarData data, _) => data.street,
+                            yValueMapper: (BarData data, _) => data.count,
+                            color: Colors.blue
+                                .withOpacity(0.3), // Light fill color
+                            borderColor: Colors.blue,
+                            borderWidth: 2,
+                          )
+                        ],
+                      ));
+                }).toList(),
               ),
-              SizedBox(
-<<<<<<< HEAD
-                  width: 600,
-                  height: 400,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.memory(
-                      base64Decode(base64Image),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.contain,
-                    ),
-                  )),
-=======
-                width: double.infinity,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Image.memory(
-                        base64Decode(base64Image),
-                        height: 350,
-                        fit: BoxFit.contain,
-                      );
-                    }
-                  ),
-                ),
-              ),
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
-              const Divider(color: Color(0xFF2D3748), height: 32),
-            ],
-          );
-        }).toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1437,10 +871,6 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-<<<<<<< HEAD
-  //Street Analysis
-=======
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
 
   Widget _buildAnalysisItem(
       String name, String value, double percentage, int index) {
@@ -1458,13 +888,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
-<<<<<<< HEAD
-                    overflow: TextOverflow.ellipsis,
-                  ),
-=======
                   ),
                   overflow: TextOverflow.ellipsis,
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
                   maxLines: 1,
                 ),
               ),
@@ -1498,9 +923,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-<<<<<<< HEAD
- Widget _buildDangerousStreetsSection() {
-=======
   // Widget _buildDangerousStreetsSection() {
   //   final dangerousStreetsData =
   //       trafficData!['Top 5 Dangerous Streets Graphs'] as Map<String, dynamic>;
@@ -1511,7 +933,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   //   // Check if mobile view
   //   bool isMobile = MediaQuery.of(context).size.width < 800;
-    
+
   //   return Container(
   //     decoration: isMobile ? BoxDecoration(
   //       color: const Color(0xFF1E293B),
@@ -1574,85 +996,87 @@ class _DashboardPageState extends State<DashboardPage> {
   //   );
   // }
 
-   Widget _buildDangerousStreetsSection() {
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
-  final dangerousStreetsData =
-      trafficData!['Top 5 Dangerous Streets'] as Map<String, dynamic>;
-      // ! ensures traffic data is non-null.
+  Widget _buildDangerousStreetsSection() {
+    final dangerousStreetsData =
+        trafficData!['Top 5 Dangerous Streets'] as Map<String, dynamic>;
+    // ! ensures traffic data is non-null.
 
-  if (dangerousStreetsData.isEmpty) {
-    return const SizedBox.shrink();
-  }
+    if (dangerousStreetsData.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Text(
-          "Top Dangerous Streets",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Text(
+            "Top Dangerous Streets",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-      ),
-      DefaultTabController(
-        length: dangerousStreetsData.length,
-        child: Column(
-          children: [
-            TabBar(
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              dividerColor: Colors.transparent,
-              labelColor: const Color(0xFF8B5CF6),
-              unselectedLabelColor: Colors.white60,
-              indicatorColor: const Color(0xFF8B5CF6),
-              tabs: dangerousStreetsData.keys
-                  .map((borough) => Tab(text: borough))
-                  .toList(),  // as TabBar requires a list of widgets.
-            ),
-            SizedBox(
-              height: 400, // Adjust height to prevent overflow
-              child: TabBarView(
-                children: dangerousStreetsData.entries.map((entry) { // forms a loop , entry is each item (boro)
-                  final borough = entry.key;    // boro
-                  final streetsData = (entry.value as Map<String, dynamic>).entries     // value are the list(json) of top 5 streets for a boro
-                      .map((e) => BarData(e.key, int.parse(e.value.toString())))    // e is each street inside the value(upar wala), storing the street and its count inside a BarData custom object
-                      .toList();
-                      // converts each street entry into a BarData object.
-
-                  return Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: SfCartesianChart(
-                      primaryXAxis: CategoryAxis(),  // meaning it will display names of streets instead of numerical values.
-                      title: ChartTitle(
-                          text: 'Top 5 Dangerous Streets in $borough'),
-                      series: <CartesianSeries<BarData, String>>[
-                        BarSeries<BarData, String>(
-                          dataSource: streetsData,
-                          xValueMapper: (BarData data, _) => data.street, // custom object se fetching street name and its count
-                          yValueMapper: (BarData data, _) => data.count,
-                          color: Colors.red,
-                        )
-                      ],
-                    ),
-                  );
-                }).toList(),
+        DefaultTabController(
+          length: dangerousStreetsData.length,
+          child: Column(
+            children: [
+              TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                dividerColor: Colors.transparent,
+                labelColor: const Color(0xFF8B5CF6),
+                unselectedLabelColor: Colors.white60,
+                indicatorColor: const Color(0xFF8B5CF6),
+                tabs: dangerousStreetsData.keys
+                    .map((borough) => Tab(text: borough))
+                    .toList(), // as TabBar requires a list of widgets.
               ),
-            ),
-          ],
+              SizedBox(
+                height: 400, // Adjust height to prevent overflow
+                child: TabBarView(
+                  children: dangerousStreetsData.entries.map((entry) {
+                    // forms a loop , entry is each item (boro)
+                    final borough = entry.key; // boro
+                    final streetsData = (entry.value as Map<String, dynamic>)
+                        .entries // value are the list(json) of top 5 streets for a boro
+                        .map((e) => BarData(
+                            e.key,
+                            int.parse(e.value
+                                .toString()))) // e is each street inside the value(upar wala), storing the street and its count inside a BarData custom object
+                        .toList();
+                    // converts each street entry into a BarData object.
+
+                    return Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SfCartesianChart(
+                        primaryXAxis:
+                            CategoryAxis(), // meaning it will display names of streets instead of numerical values.
+                        title: ChartTitle(
+                            text: 'Top 5 Dangerous Streets in $borough'),
+                        series: <CartesianSeries<BarData, String>>[
+                          BarSeries<BarData, String>(
+                            dataSource: streetsData,
+                            xValueMapper: (BarData data, _) => data
+                                .street, // custom object se fetching street name and its count
+                            yValueMapper: (BarData data, _) => data.count,
+                            color: Colors.red,
+                          )
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
   Widget _buildEmptyCard(String message) {
     return Container(
       height: 200,
@@ -1671,20 +1095,17 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 }
 
-<<<<<<< HEAD
-=======
 // Enhanced helper class for SyncFusion chart data
 class ChartData {
   ChartData(this.original, this.x, this.y);
   final String original; // Original unabbreviated value
-  final String x;        // Display value (might be abbreviated)
+  final String x; // Display value (might be abbreviated)
   final double y;
 }
 
 // Enum for chart types
 enum ChartType { bar, column, line }
 
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
 String formatNumberShort(int number) {
   if (number >= 1e9) {
     return '${(number / 1e9).toStringAsFixed(1)}B';

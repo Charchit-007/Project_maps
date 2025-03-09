@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'input.dart';
 import 'dashboard.dart';
+import 'app_bar.dart';
 import 'dart:async';
 
 void main() {
@@ -1016,9 +1017,7 @@ class _MapsPageState extends State<MapsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Route Map"),
-      ),
+      appBar: CustomAppBar(),
       body: Stack(children: [
         Column(
           children: [

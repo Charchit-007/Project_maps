@@ -11,11 +11,7 @@ class TrafficAnalysisApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-<<<<<<< HEAD
-          theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
-=======
       theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
       home: StreetInputScreen(location: this.location),
     );
   }
@@ -885,12 +881,7 @@ class AnalysisResultWidget extends StatelessWidget {
                     // Correlation Analysis
                     _buildSectionTitle(
                         "Correlation Analysis", Icon(Icons.grain_sharp)),
-<<<<<<< HEAD
-                    _buildCorrelationAnalysis(), 
-                    _buildTrendAnalysis(), 
-=======
                     _buildCorrelationAnalysis(),
->>>>>>> 27528f90fd4111a21d3d28dd10865c192873781a
                   ],
                 ),
               ),
