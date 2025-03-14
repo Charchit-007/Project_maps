@@ -64,10 +64,10 @@ class MapsPage extends StatefulWidget {
   State<MapsPage> createState() => _MapsPageState();
 }
 
-final TextEditingController _searchController = TextEditingController();
+// final TextEditingController _searchController = TextEditingController();
 
 class _MapsPageState extends State<MapsPage> {
-  Timer? _debounceTimer; //delays api calls
+  Timer? _debounceTimer; 
   LatLng? _origin;
   LatLng? _destination;
   List<LatLng> _routePoints = [];
@@ -78,9 +78,7 @@ class _MapsPageState extends State<MapsPage> {
 
   Map<String, dynamic> _routeInfo = {};
   bool _showSidebar = false;
-  Map<String, dynamic>? _selectedLocation;
-  String _streetName = '';
-
+  
   Map<String, dynamic>? _selectedOriginLocation;
   Map<String, dynamic>? _selectedDestinationLocation;
   String _originStreetName = '';
@@ -91,12 +89,11 @@ class _MapsPageState extends State<MapsPage> {
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
 
-  // Accident data
+  
   List<AccidentData> _accidentData = [];
   List<Marker> _accidentMarkers = [];
 
-  Map<LatLng, Color> _streetTraffic =
-      {}; // Add this line to store traffic colors
+  Map<LatLng, Color> _streetTraffic ={}; // store traffic colors
 
   double? _futureTrafficChange; // Store traffic change
 
@@ -104,8 +101,7 @@ class _MapsPageState extends State<MapsPage> {
   final LatLng _manhattanCenter = const LatLng(40.7831, -73.9712);
   final MapController _mapController = MapController();
 
-  bool _showRouteSearch =
-      false; // New state variable to track which search to show
+  bool _showRouteSearch = false;
 
   bool _isMobileView(BuildContext context) {
     return MediaQuery.of(context).size.width < 600;
@@ -123,7 +119,7 @@ class _MapsPageState extends State<MapsPage> {
     builder: (context, scrollController) {
       return Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF1E293B),
+          color: Color.fromARGB(255, 0, 0, 0),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(16),
             topRight: Radius.circular(16),
@@ -146,6 +142,9 @@ class _MapsPageState extends State<MapsPage> {
                   ),
                 ),
               ),
+               // Route info if available
+              if (_routeInfo.isNotEmpty)
+                _buildMobileRouteInfo(),
               // Origin details if available
               if (_selectedOriginLocation != null)
                 _buildMobileLocationDetails('Origin', _selectedOriginLocation!, _originStreetName),
@@ -153,10 +152,6 @@ class _MapsPageState extends State<MapsPage> {
               // Destination details if available and in route search mode
               if (_showRouteSearch && _selectedDestinationLocation != null)
                 _buildMobileLocationDetails('Destination', _selectedDestinationLocation!, _destinationStreetName),
-              
-              // Route info if available
-              if (_routeInfo.isNotEmpty)
-                _buildMobileRouteInfo(),
             ],
           ),
         ),
@@ -1031,7 +1026,7 @@ Widget _buildSidebar() {
           };
 
           _generateAccidentMarkers();
-          _fetchRouteTraffic();
+          // _fetchRouteTraffic();
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -1091,20 +1086,30 @@ Widget _buildSidebar() {
     );
   }
 
-    Widget _buildSearchBar() {
-    return Card(
+  Widget _buildSearchBar() {
+      return Card(
         
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(50)
+        ),
         child: Column(children: [
-          TextField(
+          Container(
+            height: 40,
+            child: TextField(
+              style: TextStyle(fontSize: 15),
             controller: _originController,
             onChanged: (value) => _searchLocation(value, true),
             decoration: InputDecoration(
               hintText: "Explore",
-              prefixIcon: const Icon(Icons.location_on),
+              fillColor: Colors.black,
+              filled: true,
+              contentPadding: EdgeInsets.symmetric(vertical: 4),
+              prefixIcon: const Icon(Icons.location_on,size: 18,),
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
             ),
+          ),
           ),
           if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
         ]));
@@ -1158,7 +1163,89 @@ Widget _buildSidebar() {
     );
   }
   
-  Widget _buildToggleableSearch() {
+  // Widget _buildToggleableSearch() {
+  //   if (_showRouteSearch) {
+  //     // Show route search (origin and destination)
+  //     return Column(
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: Padding(
+  //                 padding: const EdgeInsets.all(8.0),
+  //                 child: Column(
+  //                   children: [
+  //                     TextField(
+  //                       controller: _originController,
+  //                       onChanged: (value) => _searchLocation(value, true),
+                        
+  //                       decoration: InputDecoration(
+  //                         hintText: "Enter Origin",
+  //                         prefixIcon: const Icon(Icons.location_on),
+                          
+  //                         border: OutlineInputBorder(
+  //                             borderRadius: BorderRadius.circular(8)),
+  //                       ),
+  //                     ),
+  //                     if (_originSuggestions.isNotEmpty)
+  //                       _buildSuggestions(true),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //             // Button to toggle back to normal search
+  //             IconButton(
+  //               icon: const Icon(Icons.close),
+  //               onPressed: () {
+  //                 setState(() {
+  //                   _showRouteSearch = false;
+  //                 });
+  //               },
+  //             ),
+  //           ],
+  //         ),
+  //         Padding(
+  //           padding: const EdgeInsets.all(8.0),
+  //           child: Column(
+  //             children: [
+  //               TextField(
+  //                 controller: _destinationController,
+  //                 onChanged: (value) => _searchLocation(value, false),
+  //                 decoration: InputDecoration(
+  //                   hintText: "Enter Destination",
+  //                   prefixIcon: const Icon(Icons.location_pin),
+  //                   border: OutlineInputBorder(
+  //                       borderRadius: BorderRadius.circular(8)),
+  //                 ),
+  //               ),
+  //               if (_destinationSuggestions.isNotEmpty)
+  //                 _buildSuggestions(false),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     );
+  //   } else {
+  //     // Show normal search bar with directions button
+  //     return Row(
+  //       children: [
+  //         Expanded(
+  //           child: _buildSearchBar(),
+  //         ),
+  //         IconButton(
+  //           icon: const Icon(Icons.directions),
+  //           onPressed: () {
+  //             setState(() {
+  //               _showRouteSearch = true;
+  //             });
+  //           },
+  //         ),
+  //       ],
+  //     );
+  //   }
+  // }
+
+   Widget _buildToggleableSearch() {
     if (_showRouteSearch) {
       // Show route search (origin and destination)
       return Column(
@@ -1170,17 +1257,26 @@ Widget _buildSidebar() {
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
                     children: [
-                      TextField(
+                      Container(
+                        height: 40,
+                        child: TextField(
+                        style: TextStyle(fontSize: 15),
                         controller: _originController,
                         onChanged: (value) => _searchLocation(value, true),
                         
                         decoration: InputDecoration(
+                          
                           hintText: "Enter Origin",
-                          prefixIcon: const Icon(Icons.location_on),
+                          prefixIcon: const Icon(Icons.location_on,size: 18,),
+                          fillColor: Colors.black,
+                          filled: true,
+                          contentPadding: EdgeInsets.symmetric(vertical: 4),
+                          
                           
                           border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8)),
+                              borderRadius: BorderRadius.circular(50)),
                         ),
+                      ),
                       ),
                       if (_originSuggestions.isNotEmpty)
                         _buildSuggestions(true),
@@ -1203,15 +1299,23 @@ Widget _buildSidebar() {
             padding: const EdgeInsets.all(8.0),
             child: Column(
               children: [
-                TextField(
+                Container(
+                  height: 40,
+                  child: TextField(
+                  style: TextStyle(fontSize: 15),
                   controller: _destinationController,
                   onChanged: (value) => _searchLocation(value, false),
+                  
                   decoration: InputDecoration(
+                    filled: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 4),
+                    fillColor: Colors.black,
                     hintText: "Enter Destination",
-                    prefixIcon: const Icon(Icons.location_pin),
+                    prefixIcon: const Icon(Icons.location_pin,size: 18,),
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8)),
+                        borderRadius: BorderRadius.circular(50)),
                   ),
+                ),
                 ),
                 if (_destinationSuggestions.isNotEmpty)
                   _buildSuggestions(false),
@@ -1240,6 +1344,9 @@ Widget _buildSidebar() {
     }
   }
 
+ 
+  
+  
   @override
   Widget build(BuildContext context) {
   final bool isMobile = _isMobileView(context);
@@ -1250,7 +1357,7 @@ Widget _buildSidebar() {
       children: [
         Column(
           children: [
-            _buildToggleableSearch(),
+            Padding(padding: EdgeInsets.symmetric(vertical: 5),child: _buildToggleableSearch(),),
             Expanded(
               child: Stack(
                 children: [
@@ -1311,7 +1418,7 @@ Widget _buildSidebar() {
                         polylines: [
                           Polyline(
                             points: _routePoints,
-                            strokeWidth: 5.0,
+                            strokeWidth: 1.0,
                             color: Colors.blue,
                           ),
                         ],
@@ -1365,7 +1472,7 @@ Widget _buildSidebar() {
                 await _loadRoute();
                 if (_routePoints.isNotEmpty) {
                   await Future.wait([
-                    _fetchRouteTraffic(),
+                    // _fetchRouteTraffic(),
                     _fetchFutureTrafficChange(),
                   ]);
                 }

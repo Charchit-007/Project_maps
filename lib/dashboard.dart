@@ -404,6 +404,7 @@ class _DashboardPageState extends State<DashboardPage> {
       ],
     );
   }
+  // Icons
 
   Widget _buildBoroughSummary({bool isMobile = false}) {
     // Extract borough data
@@ -500,12 +501,13 @@ class _DashboardPageState extends State<DashboardPage> {
                 child: Text(
                   title,
                   style: const TextStyle(
-                    color: Colors.white70,
+                    color: Color.fromARGB(231, 255, 255, 255),
                     fontSize: 14,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              if(!isMobile)
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -599,7 +601,7 @@ class _DashboardPageState extends State<DashboardPage> {
     data.forEach((key, value) {
       // For mobile, abbreviate borough names if needed
       String displayKey = key;
-      if (isMobile && key.length > 10) {
+      if (isMobile && key.length > 7) {
         // Abbreviate names for small screens
         if (key == "Manhattan")
           displayKey = "Man";
@@ -996,86 +998,271 @@ class _DashboardPageState extends State<DashboardPage> {
   //   );
   // }
 
+  // Widget _buildDangerousStreetsSection() {
+  //   final dangerousStreetsData =
+  //       trafficData!['Top 5 Dangerous Streets'] as Map<String, dynamic>;
+  //   // ! ensures traffic data is non-null.
+
+  //   if (dangerousStreetsData.isEmpty) {
+  //     return const SizedBox.shrink();
+  //   }
+
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Padding(
+  //         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  //         child: Text(
+  //           "Top Dangerous Streets",
+  //           style: TextStyle(
+  //             color: Colors.white,
+  //             fontSize: 18,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //       ),
+  //       DefaultTabController(
+  //         length: dangerousStreetsData.length,
+  //         child: Column(
+  //           children: [
+  //             TabBar(
+  //               isScrollable: true,
+  //               tabAlignment: TabAlignment.start,
+  //               dividerColor: Colors.transparent,
+  //               labelColor: const Color(0xFF8B5CF6),
+  //               unselectedLabelColor: Colors.white60,
+  //               indicatorColor: const Color(0xFF8B5CF6),
+  //               tabs: dangerousStreetsData.keys
+  //                   .map((borough) => Tab(text: borough))
+  //                   .toList(), // as TabBar requires a list of widgets.
+  //             ),
+  //             SizedBox(
+  //               height: 400, // Adjust height to prevent overflow
+  //               child: TabBarView(
+  //                 children: dangerousStreetsData.entries.map((entry) {
+  //                   // forms a loop , entry is each item (boro)
+  //                   final borough = entry.key; // boro
+  //                   final streetsData = (entry.value as Map<String, dynamic>)
+  //                       .entries // value are the list(json) of top 5 streets for a boro
+  //                       .map((e) => BarData(
+  //                           e.key,
+  //                           int.parse(e.value
+  //                               .toString()))) // e is each street inside the value(upar wala), storing the street and its count inside a BarData custom object
+  //                       .toList();
+  //                   // converts each street entry into a BarData object.
+
+  //                   return Padding(
+  //                     padding: const EdgeInsets.all(16),
+  //                     child: SfCartesianChart(
+  //                       primaryXAxis:
+  //                           CategoryAxis(), // meaning it will display names of streets instead of numerical values.
+  //                       title: ChartTitle(
+  //                           text: 'Top 5 Dangerous Streets in $borough'),
+  //                       series: <CartesianSeries<BarData, String>>[
+  //                         BarSeries<BarData, String>(
+  //                           dataSource: streetsData,
+  //                           xValueMapper: (BarData data, _) => data
+  //                               .street, // custom object se fetching street name and its count
+  //                           yValueMapper: (BarData data, _) => data.count,
+  //                           color: Colors.red,
+  //                         )
+  //                       ],
+  //                     ),
+  //                   );
+  //                 }).toList(),
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
+
   Widget _buildDangerousStreetsSection() {
-    final dangerousStreetsData =
-        trafficData!['Top 5 Dangerous Streets'] as Map<String, dynamic>;
-    // ! ensures traffic data is non-null.
+  final dangerousStreetsData =
+      trafficData!['Top 5 Dangerous Streets'] as Map<String, dynamic>;
 
-    if (dangerousStreetsData.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Text(
-            "Top Dangerous Streets",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        DefaultTabController(
-          length: dangerousStreetsData.length,
-          child: Column(
-            children: [
-              TabBar(
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                dividerColor: Colors.transparent,
-                labelColor: const Color(0xFF8B5CF6),
-                unselectedLabelColor: Colors.white60,
-                indicatorColor: const Color(0xFF8B5CF6),
-                tabs: dangerousStreetsData.keys
-                    .map((borough) => Tab(text: borough))
-                    .toList(), // as TabBar requires a list of widgets.
-              ),
-              SizedBox(
-                height: 400, // Adjust height to prevent overflow
-                child: TabBarView(
-                  children: dangerousStreetsData.entries.map((entry) {
-                    // forms a loop , entry is each item (boro)
-                    final borough = entry.key; // boro
-                    final streetsData = (entry.value as Map<String, dynamic>)
-                        .entries // value are the list(json) of top 5 streets for a boro
-                        .map((e) => BarData(
-                            e.key,
-                            int.parse(e.value
-                                .toString()))) // e is each street inside the value(upar wala), storing the street and its count inside a BarData custom object
-                        .toList();
-                    // converts each street entry into a BarData object.
-
-                    return Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SfCartesianChart(
-                        primaryXAxis:
-                            CategoryAxis(), // meaning it will display names of streets instead of numerical values.
-                        title: ChartTitle(
-                            text: 'Top 5 Dangerous Streets in $borough'),
-                        series: <CartesianSeries<BarData, String>>[
-                          BarSeries<BarData, String>(
-                            dataSource: streetsData,
-                            xValueMapper: (BarData data, _) => data
-                                .street, // custom object se fetching street name and its count
-                            yValueMapper: (BarData data, _) => data.count,
-                            color: Colors.red,
-                          )
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+  if (dangerousStreetsData.isEmpty) {
+    return const SizedBox.shrink();
   }
+
+  // Check if we're on a mobile device
+  final screenWidth = MediaQuery.of(context).size.width;
+  bool isMobile = screenWidth < 800;
+  
+  // State variable to track which street's data is selected
+  Map<String, int?> selectedStreetData = {};
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Text(
+          "Top Dangerous Streets",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      DefaultTabController(
+        length: dangerousStreetsData.length,
+        child: Column(
+          children: [
+            TabBar(
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              dividerColor: Colors.transparent,
+              labelColor: const Color(0xFF8B5CF6),
+              unselectedLabelColor: Colors.white60,
+              indicatorColor: const Color(0xFF8B5CF6),
+              tabs: dangerousStreetsData.keys
+                  .map((borough) => Tab(text: borough))
+                  .toList(),
+            ),
+            SizedBox(
+              height: 400,
+              child: TabBarView(
+                children: dangerousStreetsData.entries.map((entry) {
+                  final borough = entry.key;
+                  
+                  // Process street names for mobile view - add line breaks
+                  List<BarData> streetsData = [];
+                  (entry.value as Map<String, dynamic>).entries.forEach((e) {
+                    String streetName = e.key;
+                    
+                    // For mobile view, add a line break in the middle of street names
+                    if (isMobile && streetName.length > 10) {
+                      // Find a space near the middle to break the text
+                      int middle = streetName.length ~/ 2;
+                      int breakPoint = streetName.indexOf(' ', middle - 5);
+                      if (breakPoint == -1) breakPoint = streetName.lastIndexOf(' ', middle);
+                      
+                      // If a space is found, replace it with a newline
+                      if (breakPoint != -1) {
+                        streetName = streetName.substring(0, breakPoint) + 
+                                    '\n' + 
+                                    streetName.substring(breakPoint + 1);
+                      }
+                    }
+                    
+                    streetsData.add(BarData(
+                      streetName,
+                      int.parse(e.value.toString())
+                    ));
+                  });
+
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: SfCartesianChart(
+                          primaryXAxis: CategoryAxis(
+                            labelStyle: const TextStyle(color: Colors.white60),
+                            majorGridLines: const MajorGridLines(width: 0),
+                            labelIntersectAction: AxisLabelIntersectAction.none,
+                            maximumLabels: 5,
+                            labelPosition: ChartDataLabelPosition.outside,
+                            plotOffset: isMobile ? 15 : 0,
+                            labelAlignment: LabelAlignment.center,
+                          ),
+                          primaryYAxis: NumericAxis(
+                            labelStyle: const TextStyle(color: Colors.white60),
+                            majorGridLines: const MajorGridLines(
+                              width: 1,
+                              color: Colors.grey,
+                              dashArray: <double>[5, 5],
+                            ),
+                          ),
+                          margin: isMobile 
+                              ? const EdgeInsets.fromLTRB(10, 10, 10, 30) 
+                              : const EdgeInsets.all(10),
+                          title: ChartTitle(
+                            text: 'Top 5 Dangerous Streets in $borough',
+                            textStyle: const TextStyle(color: Colors.white),
+                          ),
+                          onChartTouchInteractionUp: (ChartTouchInteractionArgs args) {
+                            // Clear the selected data
+                            if (selectedStreetData.isNotEmpty) {
+                              setState(() {
+                                selectedStreetData.clear();
+                              });
+                            }
+                          },
+                          series: <CartesianSeries<BarData, String>>[
+                            BarSeries<BarData, String>(
+                              dataSource: streetsData,
+                              xValueMapper: (BarData data, _) => data.street,
+                              yValueMapper: (BarData data, _) => data.count,
+                              color: Colors.red,
+                              width: isMobile ? 0.6 : 0.4,
+                              // Use custom data labels based on selection
+                              dataLabelSettings: DataLabelSettings(
+                                isVisible: true,
+                                builder: (dynamic data, dynamic point, dynamic series, 
+                                        int pointIndex, int seriesIndex) {
+                                  final BarData barData = data as BarData;
+                                  // Only show data label if this street is selected
+                                  if (selectedStreetData.containsKey(barData.street)) {
+                                    return Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.7),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        barData.count.toString(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    return Container(); // Empty container when not selected
+                                  }
+                                },
+                              ),
+                              // Handle tap event on bar
+                              onPointTap: (ChartPointDetails details) {
+                                final pointIndex = details.pointIndex!;
+                                final clickedStreet = streetsData[pointIndex].street;
+                                final clickedCount = streetsData[pointIndex].count;
+                                
+                                setState(() {
+                                  // If already selected, clear selection; otherwise, set selection
+                                  if (selectedStreetData.containsKey(clickedStreet)) {
+                                    selectedStreetData.clear();
+                                  } else {
+                                    selectedStreetData.clear();
+                                    selectedStreetData[clickedStreet] = clickedCount;
+                                  }
+                                });
+                              },
+                            )
+                          ],
+                          tooltipBehavior: TooltipBehavior(
+                            enable: true,
+                            format: 'Count: point.y',
+                            header: '',
+                            canShowMarker: false,
+                          ),
+                        ),
+                      );
+                    }
+                  );
+                }).toList(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
   Widget _buildEmptyCard(String message) {
     return Container(

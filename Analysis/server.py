@@ -9,7 +9,7 @@ import matplotlib.colors as mcolors
 import requests
 import seaborn as sns
 import joblib
-import logging
+
 from datetime import datetime, timedelta, timezone
 
 from dashb import traffic
