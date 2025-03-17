@@ -66,8 +66,8 @@ class _StreetInputScreenState extends State<StreetInputScreen> {
   void initState() {
     super.initState();
     String streetName =
-        widget.location['address']['road'] ?? ""; // ✅ Extract street name
-    _controller = TextEditingController(text: streetName); // ✅ Pre-fill input
+        widget.location['address']['road'] ?? ""; // Extract street name
+    _controller = TextEditingController(text: streetName); // Pre-fill input
     fetchAnalysis(_controller.text);
   }
 
@@ -253,7 +253,7 @@ class AnalysisResultWidget extends StatelessWidget {
                   child: Text(
                     _getCorrelationDescription(corrValue),
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: Colors.blue[400],
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -285,7 +285,7 @@ class AnalysisResultWidget extends StatelessWidget {
                   Text(
                     "The trend line (red) shows the relationship between traffic volume and accident frequency",
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: Colors.blue[400],
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -770,7 +770,7 @@ class AnalysisResultWidget extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    style: TextStyle(fontSize: 14, color: Colors.yellow[100]),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -785,7 +785,7 @@ class AnalysisResultWidget extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: Colors.blue[400]),
               ),
             ],
           ],
@@ -893,47 +893,3 @@ class AnalysisResultWidget extends StatelessWidget {
   }
 }
 
-class _Stats extends StatelessWidget {
-  final String title;
-  late var value;
-  late var volume;
-  _Stats({
-    super.key,
-    required this.title,
-    required this.value,
-    required this.volume,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-        // Constrain width here
-        width: 300,
-        child: Card(
-            // CARD implementation
-            elevation: 20,
-            color: Colors.grey[600],
-            child: Container(
-              height: 100,
-              width: 100,
-              decoration: BoxDecoration(
-                  color: const Color.fromARGB(255, 255, 255, 255),
-                  borderRadius: BorderRadius.only(
-                    bottomRight: Radius.circular(50),
-                  )),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("${title}: ${value.values.first}",
-                      style: const TextStyle(
-                        fontSize: 16,
-                      )),
-                  Text("Volume: ${volume.values.first}",
-                      style: const TextStyle(
-                        fontSize: 12,
-                      ))
-                ],
-              ),
-            )));
-  }
-}

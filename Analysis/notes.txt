@@ -1,0 +1,47 @@
+CORS - Prevents CORS errors when making API requests from a different origin (e.g., a Flutter app running on localhost:3000 calling a Flask backend on localhost:5000
+you can use it to sepcify the routes from which to accept requests
+
+
+matplotlib.use('Agg')  # Set non-GUI backend
+This is useful when you're generating plots dynamically in a Flask API and serving them to a frontend app
+    Matplotlib's default backends (TkAgg, Qt5Agg) need a display screen (GUI).
+    since flask runs on server ,, there is no GUI for a screen
+    Agg removes the need for a screen ... as it allows saving graphs without the screen 
+
+
+The file you execute using python <filename>.py is treated as the main file.
+
+
+
+index  Hour1  Average Volume  Hour  Accidents  Risk Ratio
+0       2      2            3487     2         15    4.301692
+1       3      3            2517     3         10    3.972984
+2       0      0           10992     0         36    3.275109
+3       1      1            5872     1         19    3.235695
+4       4      4            2793     4          9    3.222342
+5       5      5            5225     5         13    2.488038
+6       6      6           12631     6         22    1.741746
+7      15     15           35763    15         57    1.593826
+8      12     12           33661    12         52    1.544814
+9      16     16           35927    16         55    1.530882
+10     14     14           35388    14         54    1.525941
+11      9      9           30189     9         39    1.291861
+12     18     18           38133    18         49    1.284976
+13     23     23           19790    23         25    1.263264
+14     13     13           33803    13         42    1.242493
+15     17     17           37590    17         46    1.223730
+16      8      8           31071     8         38    1.223005
+17     11     11           33692    11         41    1.216906
+18     19     19           36026    19         43    1.193582
+19      7      7           27099     7         29    1.070150
+20     20     20           31749    20         31    0.976409
+21     10     10           31840    10         31    0.973618
+22     22     22           25931    22         24    0.925533
+23     21     21           28398    21         26    0.915557
+
+Hourly counts  -----  {'Queens': {0: 2159241, 3: 2253528, 6: 7979517, 9: 8225519, 12: 9343969, 15: 10599848, 18: 8681396, 21: 5348009}, 'Brooklyn': {0: 2311974, 3: 2059847, 6: 6532539, 9: 7178581, 12: 7942282, 15: 8860890, 18: 7508395, 21: 5050662}, 'Manhattan': {0: 2832686, 3: 2183828, 6: 6094181, 9: 6711829, 12: 7090020, 15: 7757263, 18: 7211050, 21: 5549165}, 'Bronx': {0: 1514892, 3: 1546097, 6: 5074172, 9: 5484655, 12: 6311031, 15: 7127259, 18: 5863507, 21: 3658302}, 'Staten Island': {0: 276455, 3: 272072, 6: 1350148, 9: 1656858, 12: 1944376, 15: 2086966, 18: 1594727, 21: 780952}}
+
+
+accident_hotspots {'Queens': {'Long Island Expressway': 2165, 'Grand Central Pkwy': 1639, 'Cross Island Parkway': 1579, 'Northern Boulevard': 1261, 'Van Wyck Expwy': 1226}, 'Brooklyn': {'Belt Parkway': 2296, 'Atlantic Avenue': 1914, 'Brooklyn Queens Expressway': 1543, 'Flatbush Avenue': 1543, 'Linden Boulevard': 1008}, 'Manhattan': {'Fdr Drive': 1899, 'Broadway': 1306, '2 Avenue': 924, 'Henry Hudson Parkway': 798, 'Amsterdam Avenue': 692}, 'Bronx': {'Major Deegan Expressway': 1297, 'Bruckner Boulevard': 1286, 'Cross Bronx Expy': 1144, 'Bruckner Expressway': 929, 'East Tremont Avenue': 830}, 'Staten Island': {'Staten Island Expressway': 970, 'Hylan Boulevard': 767, 'Richmond Avenue': 592, 'Victory Boulevard': 391, 'Forest Avenue': 384}}
+
+common causes : {'Driver Inattention/Distraction': 58308, 'Unspecified': 58262, 'Failure to Yield Right-of-Way': 16555, 'Following Too Closely': 15519, 'Passing or Lane Usage Improper': 10733, 'Passing Too Closely': 9132, 'Unsafe Speed': 8429, 'Backing Unsafely': 7473, 'Traffic Control Disregarded': 6717, 'Other Vehicular': 6494, 'Turning Improperly': 5384, 'Unsafe Lane Changing': 4973, 'Driver Inexperience': 4551, 'Alcohol Involvement': 3952, 'Reaction to Uninvolved Vehicle': 3165, 'Pedestrian/Bicyclist/Other Pedestrian Error/Confusion': 2233, 'View Obstructed/Limited': 2097, 'Pavement Slippery': 1879, 'Aggressive Driving/Road Rage': 1854, 'Fell Asleep': 1109, 'Oversized Vehicle': 1054, 'Brakes Defective': 978, 'Passenger Distraction': 627, 'Steering Failure': 581, 'Outside Car Distraction': 493, 'Obstruction/Debris': 489, 'Lost Consciousness': 441, 'Tire Failure/Inadequate': 427, 'Illnes': 417, 'Glare': 401, 'Fatigued/Drowsy': 300, 'Pavement Defective': 273, 'Failure to Keep Right': 264, 'Driverless/Runaway Vehicle': 246, 'Drugs (illegal)': 225, 'Animals Action': 203, 'Accelerator Defective': 176, 'Traffic Control Device Improper/Non-Working': 113, 'Physical Disability': 109, 'Cell Phone (hand-Held)': 107, 'Lane Marking Improper/Inadequate': 76, 'Tinted Windows': 51, 'Prescription Medication': 32, 'Other Lighting Defects': 31, 'Using On Board Navigation Device': 30, 'Other Electronic Device': 29, 'Vehicle Vandalism': 29, 'Tow Hitch Defective': 27, 'Headlights Defective': 22, 'Eating or Drinking': 19, 'Texting': 13, 'Shoulders Defective/Improper': 10, 'Cell Phone (hands-free)': 9, 'Windshield Inadequate': 7, 'Listening/Using Headphones': 6}

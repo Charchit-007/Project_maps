@@ -742,7 +742,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 16),
             SizedBox(
-              height: 400, // Fixed height for the chart area
+              height: 400, 
               child: TabBarView(
                 children: intervalGraphsData.entries.map((entry) {
                   final borough = entry.key; // boro
@@ -753,6 +753,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           int.parse(e.value
                               .toString()))) // e is each street inside the value(upar wala), storing the street and its count inside a BarData custom object
                       .toList();
+
                   // converts each street entry into a BarData object.
 
                   // return Padding(
@@ -778,23 +779,21 @@ class _DashboardPageState extends State<DashboardPage> {
                         title: ChartTitle(text: '$borough'),
                         primaryXAxis: const CategoryAxis(
                           labelStyle: TextStyle(color: Colors.white60),
-                          majorGridLines: MajorGridLines(width: 0),
+                          majorGridLines: MajorGridLines(width: 0),   // grid lines in the bg
                         ),
                         primaryYAxis: NumericAxis(
                           labelStyle: const TextStyle(color: Colors.white60),
                           majorGridLines: const MajorGridLines(
                             width: 1,
                             color: Colors.grey,
-                            dashArray: <double>[5, 5],
+                            dashArray: <double>[5, 5],    // for the grid line, 5px hyphen and fir 5 px ka space in btwn
                           ),
                           numberFormat: NumberFormat
                               .compact(), // Uses shortform like 20M, 30M
                         ),
                         tooltipBehavior: TooltipBehavior(
-                          enable: true,
-                          // Remove "Series: " text from tooltip
+                          enable: true, //enables tooltips when hovering
                           format: 'point.x: point.y',
-                          // Custom tooltip builder if needed
                           builder: (dynamic data, dynamic point, dynamic series,
                               int pointIndex, int seriesIndex) {
                             BarData chartPoint = data;
@@ -811,6 +810,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             );
                           },
                         ),
+                        // chart ka type
                         series: <CartesianSeries<BarData, String>>[
                           AreaSeries<BarData, String>(
                             dataSource: hourData,

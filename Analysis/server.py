@@ -12,6 +12,7 @@ import joblib
 
 from datetime import datetime, timedelta, timezone
 
+# functions 
 from dashb import traffic
 from blockage import scrape_blockage
 from json_read import json_to_csv
@@ -27,17 +28,16 @@ from paths import (
 )
 
 
-app = Flask(__name__)
+app = Flask(__name__)    #  flask app banata hai
 CORS(app)  # Enable CORS for all routes
 
-# Volume data
-df = pd.read_csv(VOLUME_DATA_PATH)
+
 # Load trained model
-model = joblib.load(TRAFFIC_MODEL_PATH)
+# model = joblib.load(TRAFFIC_MODEL_PATH)
 
 
 # Load dataset
-vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
+# vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
 
 # Speeds dataset
 import json
@@ -46,16 +46,18 @@ with open(SPEEDS_DATA_PATH, 'r') as f:
     data = json.load(f)
 speeds = json_to_csv(data)
 
-df['Yr'] = df['Yr'].astype(str)
+# Volume data
+df = pd.read_csv(VOLUME_DATA_PATH)
+df['Yr'] = df['Yr'].astype(str)     # convert to string
 df['M'] = df['M'].astype(str)
 df['D'] = df['D'].astype(str)
 
-df['date'] = df[['Yr', 'M', 'D']].agg('-'.join, axis=1)
+df['date'] = df[['Yr', 'M', 'D']].agg('-'.join, axis=1)     #new col added with combind date
 
 # Accident data
 df_acc = pd.read_csv(ACCIDENT_DATA_PATH)
 df_acc['Hour'] = pd.to_datetime(df_acc['Time'], format='%H:%M:%S').dt.hour  # Hour column
-
+# converts 'Time' to datetime obj, and extracts hr part using dt.hour
 
 
 @app.route('/traffic-analysis', methods=['GET','POST'])
@@ -63,7 +65,7 @@ def traffic_analysis():
     dashboard = traffic(df, df_acc)
     return dashboard
 
-@app.route("/street_analysis", methods=["GET"])
+@app.route("/street_analysis", methods=["GET"])         #as were fetching the street input from the UI
 def street_analysis():
     street = request.args.get("street")     #fetch street name from req
 
@@ -82,7 +84,7 @@ def street_analysis():
     # blockage dataset
     block = scrape_blockage()       # returns cleaned scraped df
     blocked = block[block['From Street'].str.lower().str.contains(street.lower()) | block['To Street'].str.lower().str.contains(street.lower())]    #filtered for street
-    blocked['To Date'] = pd.to_datetime(blocked['To Date'], errors='coerce')
+    blocked['To Date'] = pd.to_datetime(blocked['To Date'], errors='coerce')        #ensures that invalid dates are set to NaT to avoid errors
     blocked['month'] = pd.to_datetime(blocked['From Date'], errors='coerce').dt.month
 
 
@@ -95,18 +97,22 @@ def street_analysis():
         # total_blockages = blocked['Reason'].nunique()
         total_blockages = blocked.groupby(['Reason', 'From Street', 'To Street', 'From Date', 'To Date'])['Time'].count().count()  #gives total unique blockages from data
         active_blockages = blocked[blocked['To Date'] >= pd.Timestamp.today()].to_dict(orient='records')    # gives blockages whoes end date are yet to come ,.. thus active
+        # orient - converts the DataFrame into a list of dictionaries, where each row(record) becomes a dictionary
         com_reason = blocked['Reason'].value_counts().head(5).to_dict()        # gives most common reasons of blockage
+        # to dict makes it easy to work with json 
         monthly_blockages = blocked.groupby('month').size()
 
-        plt.figure(figsize=(10, 6))
+        plt.figure(figsize=(10, 6)) # w x h
         monthly_blockages.plot(kind='bar')
         plt.title(f"Monthly Blockage Patterns for {street}")
         plt.xlabel("Month")
         plt.ylabel("Number of Blockages")
         img_io = io.BytesIO()
+        # saves image in binary stream .. so as to avoid saving as a file on disk
         plt.savefig(img_io, format="png", bbox_inches="tight")
-        img_io.seek(0)
-        monthly_pattern = base64.b64encode(img_io.getvalue()).decode("utf-8")
+        img_io.seek(0)   # moves pointer to the start of bytes stream to avoid errors
+        monthly_pattern = base64.b64encode(img_io.getvalue()).decode("utf-8")       # encode in base64 format and decode it to a string
+        # encode and decode as josn doesnt support binary data, 
         plt.close()
 
         response["blockages"] = {
@@ -123,6 +129,8 @@ def street_analysis():
             street_data.groupby('street').apply(lambda x: x.groupby('HH')['Vol'].mean().agg(['idxmax','max'])).reset_index()
             .to_dict()
         ) 
+        # to_dict might give pandas specific dictionary ... dict() helps ensure its a standard python dictionary
+        #  used this, as got an error once that, json was unable to read the response on flutter ... it had a problem with invalid dictionary format
 
         # Least congested hour
         least_congested = dict(
@@ -153,9 +161,11 @@ def street_analysis():
             "hour_plot": img_base64,
         }
 
+    # Safety metrics
     if not street_acc.empty:
     #     return jsonify({"error": "No Accident data found for this street"}), 404
     # else:
+
         # -------------------------------------------
         # Calculate safety metrics
         total_accidents = len(street_acc)
@@ -163,7 +173,8 @@ def street_analysis():
         total_fatalities = street_acc['Persons Killed'].sum()
         if total_accidents > 0:
             severity_ratio = ((total_injuries + total_fatalities) / total_accidents)
-        else:
+            # eg -> 1.7 -> each accident results in 1.7 injuries or fatalities
+        else:   
             severity_ratio = 0
 
         # --------------------------------------------
@@ -192,7 +203,7 @@ def street_analysis():
 
         # -------------------------------------------
         # Weekly Accidents
-        weekly_accidents = 1
+        # weekly_accidents = 1
         # street_acc['Day_of_Week'].value_counts()
 
         # plt.figure(figsize=(10, 5))
@@ -249,7 +260,7 @@ def street_analysis():
                 hourly_accidents,
                 left_on=['street', 'HH'],
                 right_on=['Street Name', 'Hour'],
-                how='left'
+                how='left'          #keeps all rows from hourly_volume (traffic volume data), even if no accidents occurred for that hour
             )
             merged_data = merged_data[merged_data['Street Name'].notna()]       #remove unmatched rows with NaN
             corr = merged_data['Vol'].corr(merged_data['accident_count'])
@@ -260,6 +271,9 @@ def street_analysis():
                         scatter_kws={'s': 10, 'alpha': 0.5},  # Adjust dot size and transparency
                         line_kws={'color': 'red'},  # Make the trend line red
                         lowess=False)  # Use locally weighted regression for a smooth trend
+            # A linear regression trend line shows the overall pattern.
+            # If sloped upwards → More traffic leads to more accidents.
+
             plt.xlabel("Traffic Volume")
             plt.ylabel("Accident Count")
             plt.title("Traffic Volume vs Accident Count with Trend Line")
@@ -572,8 +586,11 @@ def predict_future():
 
 #     return jsonify(predictions)
 
-if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+if __name__ == '__main__':          #prevents the server from starting unintentionally when the file is not the main file
+    # The file you execute using python <filename>.py is treated as the main file.
+    app.run(host="0.0.0.0", port=5000, debug=True)              #"0.0.0.0" -> server accessible from any device on netwrk 
+    # we used 0.0.0.0 as we were facing some error without it. 
+# ye ensures karega that script runs only when executed directly (not when imported as a module)
 
 
 

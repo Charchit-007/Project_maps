@@ -96,6 +96,7 @@ def traffic(df, df_acc):
 
         # Most common causes of accidents
         common_causes = collision_data["Contributing Factor"].value_counts().to_dict()
+        print(f"common causes : {common_causes}  --- ")
 
         # Accidents by vehicle type
         accidents_by_vehicle = collision_data["Vehicle Type"].value_counts().to_dict()
