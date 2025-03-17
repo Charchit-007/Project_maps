@@ -290,124 +290,7 @@ def street_analysis():
             risk_analysis = peak_hour_func(street, street_data, street_acc)
             response['risk_analysis'] = risk_analysis
 
-
-
-
-    # if not street_speed.empty:
-    # #     return jsonify({"error": "No Speed data found for this street"}), 404
-    # # else:
-    #     # Get average speeds and volumes by hour
-    #     hourly_volume = street_data.groupby('HH')['Vol'].mean().reset_index()
-        
-    #     # Calculate speed to volume ratio (this will require some data matching logic)
-    #     avg_speed = street_speed['average_speed'].mean()
-    #     speed_limit = street_speed['speed_limit'].mean() if 'speed_limit' in street_speed.columns else "Unknown"
-        
-    #     # Plot average speed vs volume
-    #     plt.figure(figsize=(10, 6))
-    #     sns.lineplot(data=hourly_volume, x='HH', y='Vol', marker='o', label='Volume')
-    #     plt.title(f"Traffic Volume vs Hour for {street}")
-    #     plt.xlabel("Hour of Day")
-    #     plt.ylabel("Average Volume")
-    #     plt.xticks(range(0, 24))
-        
-    #     if avg_speed:
-    #         # Add a horizontal line for average speed
-    #         plt.axhline(y=avg_speed, color='r', linestyle='--', label=f'Avg Speed: {avg_speed:.1f} mph')
-            
-    #     plt.legend()
-        
-    #     img_io = io.BytesIO()
-    #     plt.savefig(img_io, format="png", bbox_inches="tight")
-    #     img_io.seek(0)
-    #     speed_volume_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
-    #     plt.close()
-
-    #     # --------------------------------------
-
-    #     # street_data['date'] = pd.to_datetime(street_data['date'])
-    #     # df_acc['Date'] = pd.to_datetime(df_acc['Date'])
-        
-    #     # # Monthly volume trends
-    #     # monthly_volumes = street_data.groupby(pd.Grouper(key='date', freq='M'))['Vol'].mean().reset_index()
-    #     # monthly_volumes = monthly_volumes.rename(columns={'date': 'Month', 'Vol': 'Average Volume'})
-        
-    #     # # Monthly accident trends
-    #     # monthly_accidents = street_acc.groupby(pd.Grouper(key='Date', freq='M')).size().reset_index(name='Accident Count')
-        
-    #     # # Plot the trends
-    #     # fig, ax1 = plt.subplots(figsize=(12, 6))
-        
-    #     # ax1.set_xlabel('Month')
-    #     # ax1.set_ylabel('Average Volume', color='tab:blue')
-    #     # ax1.plot(monthly_volumes['Month'], monthly_volumes['Average Volume'], color='tab:blue', marker='o')
-    #     # ax1.tick_params(axis='y', labelcolor='tab:blue')
-        
-    #     # # Create a second y-axis
-    #     # ax2 = ax1.twinx()
-    #     # ax2.set_ylabel('Accident Count', color='tab:red')
-    #     # ax2.plot(monthly_accidents['Date'], monthly_accidents['Accident Count'], color='tab:red', marker='x')
-    #     # ax2.tick_params(axis='y', labelcolor='tab:red')
-        
-    #     # plt.title(f"Volume and Accident Trends for {street}")
-    #     # fig.tight_layout()
-        
-    #     # img_io = io.BytesIO()
-    #     # plt.savefig(img_io, format="png", bbox_inches="tight")
-    #     # img_io.seek(0)
-    #     # trend_plot = base64.b64encode(img_io.getvalue()).decode("utf-8")
-    #     # plt.close()
-
-
-
-    return jsonify(response)
-    #     
-    #     # ---------------------
-    #     # "trend_analysis": {
-    #     #     "trend_plot": trend_plot,
-    #     #     "volume_growth": float(monthly_volumes.iloc[-1]['Average Volume'] / monthly_volumes.iloc[0]['Average Volume'] - 1) 
-    #     #         if len(monthly_volumes) > 1 else None,
-    #     #     "accident_growth": float(monthly_accidents.iloc[-1]['Accident Count'] / monthly_accidents.iloc[0]['Accident Count'] - 1)
-    #     #         if len(monthly_accidents) > 1 else None
-    #     # },
-    #     "risk_analysis":,
-    #     # "boro_volume": boro_volume,
-    #     # "weekly_accidents": weekly_accidents_img,
-    # })
-
-# from flask import Flask, jsonify, request
-# import joblib
-# import pandas as pd
-# from flask_cors import CORS
-# from datetime import datetime, timedelta, timezone
-
-# app = Flask(__name__)
-# CORS(app)
-
-# # Load trained model
-# model = joblib.load(TRAFFIC_MODEL_PATH)
-
-# # Load dataset
-# vdf = pd.read_csv(VOLUME_DATASET_PATH)
-
-# Function to predict traffic without weather data
-# def predict_traffic(lat, lon, hour, minute):
-#     input_data = pd.DataFrame([{
-#         'HH': hour,
-#         'MM': minute
-#     }])  #  No weather features included
-
-#     predicted_volume = model.predict(input_data)[0]
-#     return predicted_volume
-
-# 'HH': hour,
-#             'MM': minute,
-#             'temp_max': 25,  # More realistic default values
-#             'temp_min': 15,  # that could be updated with real
-#             'precipitation': 0.1,  # weather API data
-#             'rain': 0,
-#             'snow': 0,
-#             'windspeed_max': 15
+    return(response)
 
 def fetch_weather_data():
     url = "https://api.open-meteo.com/v1/forecast"
@@ -447,7 +330,14 @@ weather_data = fetch_weather_data()
 
 def predict_traffic(lat,lon,hour, minute):
     try:
-        input_data = pd.DataFrame([{ "HH": hour, "MM": minute,**weather_data}])
+        input_data = pd.DataFrame([{ 
+    "Latitude": lat, 
+    "Longitude": lon, 
+    "HH": hour, 
+    "MM": minute, 
+    **weather_data 
+}])
+
         predicted_volume = model.predict(input_data)[0]
         return predicted_volume
     except Exception as e:

@@ -5,10 +5,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 
 # Load dataset
-df = pd.read_csv(r"model\volume_dataset.csv")  # Ensure your dataset is in CSV format
+df = pd.read_csv(r"C:\DM Project\volume_dataset.csv")  # Ensure your dataset is in CSV format
 
 # Feature selection
-features = ['HH', 'MM', 'temp_max', 'temp_min', 'precipitation', 'rain', 'snow', 'windspeed_max']
+features = ['Latitude', 'Longitude', 'HH', 'MM', 'temp_max', 'temp_min', 'precipitation', 'rain', 'snow', 'windspeed_max']
+
 target = 'Vol'
 
 # Drop rows with missing values
@@ -22,4 +23,4 @@ model = RandomForestRegressor(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
 # Save model
-joblib.dump(model, 'traffic_model.pkl')
+joblib.dump(model, r'C:\DM Project\traffic_model_new.pkl')

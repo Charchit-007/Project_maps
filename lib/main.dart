@@ -114,7 +114,7 @@ class _MapsPageState extends State<MapsPage> {
 
   return DraggableScrollableSheet(
     initialChildSize: 0.3,
-    minChildSize: 0.1,
+    minChildSize: 0.03,
     maxChildSize: 0.6,
     builder: (context, scrollController) {
       return Container(
@@ -670,7 +670,7 @@ Widget _buildPredictionBox() {
   }
 
   bool _isPointNearRoute(LatLng point) {
-    // Simple implementation: check if point is within a certain distance of any route point
+    // check if point is within 200m of any route point
     const double maxDistanceInKm = 0.2; // 200 meters
 
     for (var routePoint in _routePoints) {
@@ -1026,7 +1026,7 @@ Widget _buildSidebar() {
           };
 
           _generateAccidentMarkers();
-          // _fetchRouteTraffic();
+          _fetchRouteTraffic();
         });
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
@@ -1043,9 +1043,9 @@ Widget _buildSidebar() {
   }
 
   String _getMapUrl() {
-    if (_showTraffic) {
-      return 'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=4fe4cdb808254e38adb6efd7ed6f807e';
-    }
+    // if (_showTraffic) {
+    //   return 'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=4fe4cdb808254e38adb6efd7ed6f807e';
+    // }
     return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   }
 
@@ -1163,88 +1163,6 @@ Widget _buildSidebar() {
     );
   }
   
-  // Widget _buildToggleableSearch() {
-  //   if (_showRouteSearch) {
-  //     // Show route search (origin and destination)
-  //     return Column(
-  //       children: [
-  //         Row(
-  //           children: [
-  //             Expanded(
-  //               child: Padding(
-  //                 padding: const EdgeInsets.all(8.0),
-  //                 child: Column(
-  //                   children: [
-  //                     TextField(
-  //                       controller: _originController,
-  //                       onChanged: (value) => _searchLocation(value, true),
-                        
-  //                       decoration: InputDecoration(
-  //                         hintText: "Enter Origin",
-  //                         prefixIcon: const Icon(Icons.location_on),
-                          
-  //                         border: OutlineInputBorder(
-  //                             borderRadius: BorderRadius.circular(8)),
-  //                       ),
-  //                     ),
-  //                     if (_originSuggestions.isNotEmpty)
-  //                       _buildSuggestions(true),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ),
-  //             // Button to toggle back to normal search
-  //             IconButton(
-  //               icon: const Icon(Icons.close),
-  //               onPressed: () {
-  //                 setState(() {
-  //                   _showRouteSearch = false;
-  //                 });
-  //               },
-  //             ),
-  //           ],
-  //         ),
-  //         Padding(
-  //           padding: const EdgeInsets.all(8.0),
-  //           child: Column(
-  //             children: [
-  //               TextField(
-  //                 controller: _destinationController,
-  //                 onChanged: (value) => _searchLocation(value, false),
-  //                 decoration: InputDecoration(
-  //                   hintText: "Enter Destination",
-  //                   prefixIcon: const Icon(Icons.location_pin),
-  //                   border: OutlineInputBorder(
-  //                       borderRadius: BorderRadius.circular(8)),
-  //                 ),
-  //               ),
-  //               if (_destinationSuggestions.isNotEmpty)
-  //                 _buildSuggestions(false),
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     );
-  //   } else {
-  //     // Show normal search bar with directions button
-  //     return Row(
-  //       children: [
-  //         Expanded(
-  //           child: _buildSearchBar(),
-  //         ),
-  //         IconButton(
-  //           icon: const Icon(Icons.directions),
-  //           onPressed: () {
-  //             setState(() {
-  //               _showRouteSearch = true;
-  //             });
-  //           },
-  //         ),
-  //       ],
-  //     );
-  //   }
-  // }
-
    Widget _buildToggleableSearch() {
     if (_showRouteSearch) {
       // Show route search (origin and destination)
@@ -1414,11 +1332,12 @@ Widget _buildSidebar() {
                             );
                           }).toList(),
                         ),
+                      if(!_showTraffic)
                       PolylineLayer(
                         polylines: [
                           Polyline(
                             points: _routePoints,
-                            strokeWidth: 1.0,
+                            strokeWidth: 5.0,
                             color: Colors.blue,
                           ),
                         ],
@@ -1472,7 +1391,7 @@ Widget _buildSidebar() {
                 await _loadRoute();
                 if (_routePoints.isNotEmpty) {
                   await Future.wait([
-                    // _fetchRouteTraffic(),
+                    _fetchRouteTraffic(),
                     _fetchFutureTrafficChange(),
                   ]);
                 }
