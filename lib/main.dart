@@ -114,7 +114,7 @@ class _MapsPageState extends State<MapsPage> {
 
   return DraggableScrollableSheet(
     initialChildSize: 0.3,
-    minChildSize: 0.1,
+    minChildSize: 0.03,
     maxChildSize: 0.6,
     builder: (context, scrollController) {
       return Container(
@@ -1043,9 +1043,9 @@ Widget _buildSidebar() {
   }
 
   String _getMapUrl() {
-    if (_showTraffic) {
-      return 'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=4fe4cdb808254e38adb6efd7ed6f807e';
-    }
+    // if (_showTraffic) {
+    //   return 'https://tile.thunderforest.com/atlas/{z}/{x}/{y}.png?apikey=4fe4cdb808254e38adb6efd7ed6f807e';
+    // }
     return 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   }
 

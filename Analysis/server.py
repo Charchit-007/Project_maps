@@ -276,6 +276,8 @@ def street_analysis():
             risk_analysis = peak_hour_func(street, street_data, street_acc)
             response['risk_analysis'] = risk_analysis
 
+    return(response)
+
 def fetch_weather_data():
     url = "https://api.open-meteo.com/v1/forecast"
     params = {
