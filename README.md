@@ -2,6 +2,10 @@
 
 **RoutEx** is a traffic monitoring and analysis application built to enhance navigation and promote safer travel across New York City. By delivering real-time traffic insights, intelligent route planning, accident-prone zone alerts and detailed traffic pattern analysis, RoutEx empowers users to make informed and efficient travel decisions.
 
+## 🎥 Demo Video
+[![Watch the demo](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://youtu.be/kTo_Jq2Mf50)
+
+
 ## Overview
 
 RoutEx leverages historical traffic data, real-time updates, and accident reports to provide a comprehensive view of congestion patterns and high-risk areas. It integrates multiple reliable data sources including:
