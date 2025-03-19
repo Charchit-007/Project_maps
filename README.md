@@ -1,6 +1,6 @@
 # RoutEx - NYC Traffic Monitoring & Analysis App
 
-**RoutEx** is a traffic monitoring and analysis application built to enhance navigation and promote safer travel across New York City. By delivering real-time traffic insights, intelligent route planning, and accident-prone zone alerts, RoutEx empowers users to make informed and efficient travel decisions.
+**RoutEx** is a traffic monitoring and analysis application built to enhance navigation and promote safer travel across New York City. By delivering real-time traffic insights, intelligent route planning, accident-prone zone alerts and detailed traffic pattern analysis, RoutEx empowers users to make informed and efficient travel decisions.
 
 ## Overview
 
@@ -29,7 +29,7 @@ Visualize accident hotspots with interactive heatmaps based on aggregated histor
 Explore past traffic patterns, analyze congestion trends, and understand peak traffic times.
 
 ### ● Road Closures & Blockage Alerts  
-Get notified about road closures and blockages using advisory updates from NYC.gov.
+Get latest road closures and blockage alerts using advisory updates from NYC.gov.
 
 ---
 
