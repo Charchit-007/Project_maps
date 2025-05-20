@@ -13,7 +13,9 @@ import 'dart:async';
 void main() {
   runApp(MaterialApp(
     home: const DashboardPage(),
-    theme: ThemeData.dark().copyWith(primaryColor: Color(0xFF1E293B), scaffoldBackgroundColor: const Color(0xFF1E293B)),
+    theme: ThemeData.dark().copyWith(
+        primaryColor: Color(0xFF1E293B),
+        scaffoldBackgroundColor: const Color(0xFF1E293B)),
     debugShowCheckedModeBanner: false,
   ));
   // runApp(const OpenStreetMapRouteApp());
@@ -67,7 +69,7 @@ class MapsPage extends StatefulWidget {
 // final TextEditingController _searchController = TextEditingController();
 
 class _MapsPageState extends State<MapsPage> {
-  Timer? _debounceTimer; 
+  Timer? _debounceTimer;
   LatLng? _origin;
   LatLng? _destination;
   List<LatLng> _routePoints = [];
@@ -78,7 +80,7 @@ class _MapsPageState extends State<MapsPage> {
 
   Map<String, dynamic> _routeInfo = {};
   bool _showSidebar = false;
-  
+
   Map<String, dynamic>? _selectedOriginLocation;
   Map<String, dynamic>? _selectedDestinationLocation;
   String _originStreetName = '';
@@ -89,11 +91,14 @@ class _MapsPageState extends State<MapsPage> {
   final TextEditingController _originController = TextEditingController();
   final TextEditingController _destinationController = TextEditingController();
 
-  
   List<AccidentData> _accidentData = [];
   List<Marker> _accidentMarkers = [];
 
-  Map<LatLng, Color> _streetTraffic ={}; // store traffic colors
+  String errorMessage = ""; //for blockages fetching
+  List blockageResult = [];
+  List<Marker> _blockageMarkers = [];
+
+  Map<LatLng, Color> _streetTraffic = {}; // store traffic colors
 
   double? _futureTrafficChange; // Store traffic change
 
@@ -108,209 +113,216 @@ class _MapsPageState extends State<MapsPage> {
   }
 
   Widget _buildMobileLocationPanel() {
-  if ((_selectedOriginLocation == null && _selectedDestinationLocation == null) || !_showSidebar) {
-    return const SizedBox.shrink();
-  }
+    if ((_selectedOriginLocation == null &&
+            _selectedDestinationLocation == null) ||
+        !_showSidebar) {
+      return const SizedBox.shrink();
+    }
 
-  return DraggableScrollableSheet(
-    initialChildSize: 0.3,
-    minChildSize: 0.03,
-    maxChildSize: 0.6,
-    builder: (context, scrollController) {
-      return Container(
-        decoration: const BoxDecoration(
-          color: Color.fromARGB(255, 0, 0, 0),
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(16),
-            topRight: Radius.circular(16),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.3,
+      minChildSize: 0.03,
+      maxChildSize: 0.6,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color.fromARGB(255, 0, 0, 0),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
           ),
-        ),
-        child: SingleChildScrollView(
-          controller: scrollController,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(vertical: 12),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[400],
-                    borderRadius: BorderRadius.circular(2),
+          child: SingleChildScrollView(
+            controller: scrollController,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
+                // Route info if available
+                if (_routeInfo.isNotEmpty) _buildMobileRouteInfo(),
+                // Origin details if available
+                if (_selectedOriginLocation != null)
+                  _buildMobileLocationDetails(
+                      'Origin', _selectedOriginLocation!, _originStreetName),
+
+                // Destination details if available and in route search mode
+                if (_showRouteSearch && _selectedDestinationLocation != null)
+                  _buildMobileLocationDetails('Destination',
+                      _selectedDestinationLocation!, _destinationStreetName),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileLocationDetails(
+      String title, Map<String, dynamic> location, String streetName) {
+    final address = location['address'] as Map<String, dynamic>;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-               // Route info if available
-              if (_routeInfo.isNotEmpty)
-                _buildMobileRouteInfo(),
-              // Origin details if available
-              if (_selectedOriginLocation != null)
-                _buildMobileLocationDetails('Origin', _selectedOriginLocation!, _originStreetName),
-              
-              // Destination details if available and in route search mode
-              if (_showRouteSearch && _selectedDestinationLocation != null)
-                _buildMobileLocationDetails('Destination', _selectedDestinationLocation!, _destinationStreetName),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          TrafficAnalysisApp(location: location),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 142, 255, 141),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.only(
+                      bottomRight: Radius.circular(20),
+                    ),
+                  ),
+                ),
+                child: const Icon(Icons.analytics_outlined),
+              ),
+            ],
+          ),
+          const Divider(color: Colors.grey),
+          _buildMobileDetailItem(
+              'Name', location['display_name'].toString().split(',').first),
+          if (streetName.isNotEmpty)
+            _buildMobileDetailItem('Street', streetName),
+          if (address['city'] != null)
+            _buildMobileDetailItem('City', address['city']),
+          if (address['state'] != null)
+            _buildMobileDetailItem('State', address['state']),
+          _buildMobileDetailItem(
+              'Coordinates', '${location['lat']}, ${location['lon']}'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileDetailItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
+              fontSize: 12,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 14),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileRouteInfo() {
+    final distance = (_routeInfo['distance'] / 1000).toStringAsFixed(2);
+    final duration = (_routeInfo['duration'] / 60).toStringAsFixed(0);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black26,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.directions_car),
+              Text('$distance km'),
+            ],
+          ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.access_time),
+              Text('$duration mins'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPredictionBox() {
+    if (_futureTrafficChange == null) return const SizedBox.shrink();
+
+    return Positioned(
+      top: _isMobileView(context) ? 80 : 80, // Adjust position for mobile
+      right: 16,
+      child: Card(
+        color: Colors.white,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.timeline,
+                size: 20,
+                color: Colors.blue,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                "Traffic in 30 min: ${_futureTrafficChange!.toStringAsFixed(2)}%",
+                style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black),
+              ),
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.close, size: 16),
+                onPressed: () {
+                  setState(() {
+                    _futureTrafficChange = null;
+                  });
+                },
+              )
             ],
           ),
         ),
-      );
-    },
-  );
-}
-
-Widget _buildMobileLocationDetails(String title, Map<String, dynamic> location, String streetName) {
-  final address = location['address'] as Map<String, dynamic>;
-  
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TrafficAnalysisApp(location: location),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 142, 255, 141),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    bottomRight: Radius.circular(20),
-                  ),
-                ),
-              ),
-              child: const Icon(Icons.analytics_outlined),
-            ),
-          ],
-        ),
-        const Divider(color: Colors.grey),
-        _buildMobileDetailItem('Name', location['display_name'].toString().split(',').first),
-        if (streetName.isNotEmpty)
-          _buildMobileDetailItem('Street', streetName),
-        if (address['city'] != null)
-          _buildMobileDetailItem('City', address['city']),
-        if (address['state'] != null)
-          _buildMobileDetailItem('State', address['state']),
-        _buildMobileDetailItem('Coordinates', '${location['lat']}, ${location['lon']}'),
-      ],
-    ),
-  );
-}
-
-Widget _buildMobileDetailItem(String label, String value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey,
-            fontSize: 12,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 14),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildMobileRouteInfo() {
-  final distance = (_routeInfo['distance'] / 1000).toStringAsFixed(2);
-  final duration = (_routeInfo['duration'] / 60).toStringAsFixed(0);
-
-  return Container(
-    padding: const EdgeInsets.all(16),
-    margin: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: Colors.black26,
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.directions_car),
-            Text('$distance km'),
-          ],
-        ),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.access_time),
-            Text('$duration mins'),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _buildPredictionBox() {
-  if (_futureTrafficChange == null) return const SizedBox.shrink();
-
-  return Positioned(
-    top: _isMobileView(context) ? 80 : 80, // Adjust position for mobile
-    right: 16,
-    child: Card(
-      color: Colors.white,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.timeline,
-              size: 20,
-              color: Colors.blue,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              "Traffic in 30 min: ${_futureTrafficChange!.toStringAsFixed(2)}%",
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.black
-              ),
-            ),
-            IconButton(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-              icon: const Icon(Icons.close, size: 16),
-              onPressed: () {
-                setState(() {
-                  _futureTrafficChange = null;
-                });
-              },
-            )
-          ],
-        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   void initState() {
@@ -640,6 +652,81 @@ Widget _buildPredictionBox() {
     }
   }
 
+  // -------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Future<Map<String, double>?> fetchStreetCoordinates(String street, String borough) async {
+    print("FETCHING COORDS wait ----------------------------------------------------------------------");
+    final uri = Uri.parse(
+      'https://geocode.maps.co/search?street=${Uri.encodeComponent(street)}'
+      '&city=${Uri.encodeComponent(borough)}'
+      '&state=NY&country=US'
+      '&api_key=67f0baebcd569677095236hjyea6002&limit=1',
+    );
+
+    try {
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        print("Coordinates are : $data     ----------------------------------------------------------------------------------------------");
+        if (data.isNotEmpty) {
+          final lat = double.tryParse(data[0]['lat']);
+          final lon = double.tryParse(data[0]['lon']);
+
+          if (lat != null && lon != null) {
+            return {'lat': lat, 'lon': lon};
+          }
+        }
+      } else {
+        print("Error: Street Coordinates - Received status ${response.statusCode} -------------------------------------------------------------");
+      }
+    } catch (e) {
+      print("Exception in fetchStreetCoordinates: $e");
+    }
+    return null;
+  }
+
+  Future<void> _generateBlockageMarkers() async {
+    print("Generating BLockage Markers");
+    if (_routePoints.isEmpty) return;
+    List<dynamic> blockage_data = blockageResult;
+    _blockageMarkers.clear();
+
+    for (var blockage in blockage_data) {
+      print("In loop , Will now fetch Coords");
+      final from = await fetchStreetCoordinates(blockage["From Street"], blockage["Borough"]);
+      final to = await fetchStreetCoordinates(blockage["To Street"], blockage["Borough"]);
+      if (from == null || to == null) continue; // Skip if either failed
+
+      final mid = LatLng((from['lat']! + to['lat']!) / 2, (from['lon']! + to['lon']!)/2);
+
+      // Check if this accident point is close to our route
+      bool isNearRoute = _isPointNearRoute(mid);
+      if (!isNearRoute) continue;
+
+      print("Blockage from: ${blockage["From Street"]}, to: ${blockage["To Street"]}");
+      print("Coords FROM: $from TO: $to");
+      print("Midpoint: $mid");
+      print("Is near route? $isNearRoute");
+
+      // Add warning marker for this high-risk area
+      _blockageMarkers.add(
+        Marker(
+          point: mid,
+          child: GestureDetector(
+            // onTap: () => _showAccidentDetails(accidentPoint),
+            child: const Icon(
+              Icons.construction,
+              color: Colors.orange,
+              size: 30,
+            ),
+          ),
+        ),
+      );
+      print("added to Markers list");
+    }
+  }
+  // -------------------------------------------------------------------------------------------------------------------------------------------------------------
+
   void _showAccidentDetails(AccidentData data) {
     showDialog(
       context: context,
@@ -755,8 +842,6 @@ Widget _buildPredictionBox() {
   //   });
   // }
 
-
-
   Widget _buildLocationPanel(String title, Map<String, dynamic>? location,
       String streetName, BuildContext context) {
     if (location == null) return const SizedBox.shrink();
@@ -819,116 +904,119 @@ Widget _buildPredictionBox() {
     );
   }
 
-bool _isSidebarCollapsed = false;
+  bool _isSidebarCollapsed = false;
 
 // Replace _buildSidebar function to add toggle button
-Widget _buildSidebar() {
-  final bool hasAnyLocation =
-      _selectedOriginLocation != null || _selectedDestinationLocation != null;
+  Widget _buildSidebar() {
+    final bool hasAnyLocation =
+        _selectedOriginLocation != null || _selectedDestinationLocation != null;
 
-  if (!_showSidebar || !hasAnyLocation) return const SizedBox.shrink();
+    if (!_showSidebar || !hasAnyLocation) return const SizedBox.shrink();
 
-  // If sidebar is collapsed, show only the toggle button
-  if (_isSidebarCollapsed) {
-    return Positioned(
-      left: 0,
-      top: 80,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Color(0xFF1E293B),
-          borderRadius: BorderRadius.only(
-            topRight: Radius.circular(8),
-            bottomRight: Radius.circular(8),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 4,
-              offset: Offset(0, 2),
+    // If sidebar is collapsed, show only the toggle button
+    if (_isSidebarCollapsed) {
+      return Positioned(
+        left: 0,
+        top: 80,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Color(0xFF1E293B),
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(8),
+              bottomRight: Radius.circular(8),
             ),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
+          child: IconButton(
+            icon: Icon(Icons.chevron_right),
+            onPressed: () {
+              setState(() {
+                _isSidebarCollapsed = false;
+              });
+            },
+          ),
         ),
-        child: IconButton(
-          icon: Icon(Icons.chevron_right),
-          onPressed: () {
-            setState(() {
-              _isSidebarCollapsed = false;
-            });
-          },
+      );
+    }
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: 400),
+      child: Positioned(
+        left: 0,
+        top: 0,
+        bottom: 0,
+        child: Card(
+          margin: const EdgeInsets.all(8),
+          child: IntrinsicHeight(
+            child: Container(
+              width: 320,
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Location Details',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Row(
+                        children: [
+                          // Add collapse button
+                          IconButton(
+                            icon: const Icon(Icons.chevron_left),
+                            onPressed: () =>
+                                setState(() => _isSidebarCollapsed = true),
+                            tooltip: "Collapse sidebar",
+                          ),
+                          // IconButton(
+                          //   icon: const Icon(Icons.close),
+                          //   onPressed: () => setState(() => _showSidebar = false),
+                          //   tooltip: "Close sidebar",
+                          // ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        _buildLocationPanel('Origin', _selectedOriginLocation,
+                            _originStreetName, context),
+                        const Divider(),
+                        SizedBox(
+                            child: _showRouteSearch
+                                ? _buildLocationPanel(
+                                    'Destination',
+                                    _selectedDestinationLocation,
+                                    _destinationStreetName,
+                                    context)
+                                : null),
+                        const Divider(),
+                        SizedBox(
+                            child: _showRouteSearch ? _buildRouteInfo() : null),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  return ConstrainedBox(
-    constraints: BoxConstraints(minHeight: 400),
-    child: Positioned(
-      left: 0,
-      top: 0,
-      bottom: 0,
-      child: Card(
-        margin: const EdgeInsets.all(8),
-        child: IntrinsicHeight(
-          child: Container(
-            width: 320,
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Location Details',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    Row(
-                      children: [
-                        // Add collapse button
-                        IconButton(
-                          icon: const Icon(Icons.chevron_left),
-                          onPressed: () => setState(() => _isSidebarCollapsed = true),
-                          tooltip: "Collapse sidebar",
-                        ),
-                        // IconButton(
-                        //   icon: const Icon(Icons.close),
-                        //   onPressed: () => setState(() => _showSidebar = false),
-                        //   tooltip: "Close sidebar",
-                        // ),
-                      ],
-                    ),
-                  ],
-                ),
-                const Divider(),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      _buildLocationPanel('Origin', _selectedOriginLocation,
-                          _originStreetName, context),
-                      const Divider(),
-                      SizedBox(
-                          child: _showRouteSearch
-                              ? _buildLocationPanel(
-                                  'Destination',
-                                  _selectedDestinationLocation,
-                                  _destinationStreetName,
-                                  context)
-                              : null),
-                      const Divider(),
-                      SizedBox(
-                          child: _showRouteSearch ? _buildRouteInfo() : null),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
-}
   Widget _buildDetailItem(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1016,6 +1104,9 @@ Widget _buildSidebar() {
         final List<dynamic> coordinates = route['geometry']['coordinates'];
 
         setState(() {
+          blockageResult.clear();
+          _blockageMarkers.clear();
+
           _routePoints = coordinates
               .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
               .toList();
@@ -1024,10 +1115,19 @@ Widget _buildSidebar() {
             'distance': route['distance'],
             'duration': route['duration'],
           };
-
-          _generateAccidentMarkers();
-          _fetchRouteTraffic();
         });
+
+          await fetchBlockages(_originStreetName);
+          await fetchBlockages(_destinationStreetName);
+          print("Printing Blockage Result---------------------------------------------------------------------------");
+          // print(blockageResult);
+          
+          print("Markers Stage");
+          _generateAccidentMarkers();
+          await _generateBlockageMarkers();
+          _fetchRouteTraffic();
+
+          setState(() {});
       } else {
         throw Exception('Failed to load route: ${response.statusCode}');
       }
@@ -1039,6 +1139,36 @@ Widget _buildSidebar() {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future fetchBlockages(String street) async {
+    print("Fetching blockages");
+    setState(() {
+      errorMessage = "";
+    });
+
+    try {
+      final response = await http
+          .get(Uri.parse("http://127.0.0.1:5000/blockages?street=$street"));
+
+      if (response.statusCode == 200) {
+        setState(() {
+          blockageResult += jsonDecode(response.body)["blockages"]["active_blockages"];
+          // print(jsonDecode(response.body));
+        });
+      } else {
+        setState(() {
+          errorMessage =
+              jsonDecode(response.body)['error'] ?? "Something went wrong!";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "Failed to connect to server.";
+      });
+    } finally {
+      setState(() {});
     }
   }
 
@@ -1087,34 +1217,33 @@ Widget _buildSidebar() {
   }
 
   Widget _buildSearchBar() {
-      return Card(
-        
+    return Card(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(50)
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
         child: Column(children: [
           Container(
             height: 40,
             child: TextField(
               style: TextStyle(fontSize: 15),
-            controller: _originController,
-            onChanged: (value) => _searchLocation(value, true),
-            decoration: InputDecoration(
-              hintText: "Explore",
-              fillColor: Colors.black,
-              filled: true,
-              contentPadding: EdgeInsets.symmetric(vertical: 4),
-              prefixIcon: const Icon(Icons.location_on,size: 18,),
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
+              controller: _originController,
+              onChanged: (value) => _searchLocation(value, true),
+              decoration: InputDecoration(
+                hintText: "Explore",
+                fillColor: Colors.black,
+                filled: true,
+                contentPadding: EdgeInsets.symmetric(vertical: 4),
+                prefixIcon: const Icon(
+                  Icons.location_on,
+                  size: 18,
+                ),
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(50)),
+              ),
             ),
-          ),
           ),
           if (_originSuggestions.isNotEmpty) _buildSuggestions(true),
         ]));
   }
-  
 
   Widget _buildSuggestions(bool isOrigin) {
     final suggestions = isOrigin ? _originSuggestions : _destinationSuggestions;
@@ -1162,8 +1291,8 @@ Widget _buildSidebar() {
       ),
     );
   }
-  
-   Widget _buildToggleableSearch() {
+
+  Widget _buildToggleableSearch() {
     if (_showRouteSearch) {
       // Show route search (origin and destination)
       return Column(
@@ -1178,23 +1307,22 @@ Widget _buildSidebar() {
                       Container(
                         height: 40,
                         child: TextField(
-                        style: TextStyle(fontSize: 15),
-                        controller: _originController,
-                        onChanged: (value) => _searchLocation(value, true),
-                        
-                        decoration: InputDecoration(
-                          
-                          hintText: "Enter Origin",
-                          prefixIcon: const Icon(Icons.location_on,size: 18,),
-                          fillColor: Colors.black,
-                          filled: true,
-                          contentPadding: EdgeInsets.symmetric(vertical: 4),
-                          
-                          
-                          border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(50)),
+                          style: TextStyle(fontSize: 15),
+                          controller: _originController,
+                          onChanged: (value) => _searchLocation(value, true),
+                          decoration: InputDecoration(
+                            hintText: "Enter Origin",
+                            prefixIcon: const Icon(
+                              Icons.location_on,
+                              size: 18,
+                            ),
+                            fillColor: Colors.black,
+                            filled: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 4),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(50)),
+                          ),
                         ),
-                      ),
                       ),
                       if (_originSuggestions.isNotEmpty)
                         _buildSuggestions(true),
@@ -1220,20 +1348,22 @@ Widget _buildSidebar() {
                 Container(
                   height: 40,
                   child: TextField(
-                  style: TextStyle(fontSize: 15),
-                  controller: _destinationController,
-                  onChanged: (value) => _searchLocation(value, false),
-                  
-                  decoration: InputDecoration(
-                    filled: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 4),
-                    fillColor: Colors.black,
-                    hintText: "Enter Destination",
-                    prefixIcon: const Icon(Icons.location_pin,size: 18,),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(50)),
+                    style: TextStyle(fontSize: 15),
+                    controller: _destinationController,
+                    onChanged: (value) => _searchLocation(value, false),
+                    decoration: InputDecoration(
+                      filled: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 4),
+                      fillColor: Colors.black,
+                      hintText: "Enter Destination",
+                      prefixIcon: const Icon(
+                        Icons.location_pin,
+                        size: 18,
+                      ),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(50)),
+                    ),
                   ),
-                ),
                 ),
                 if (_destinationSuggestions.isNotEmpty)
                   _buildSuggestions(false),
@@ -1262,148 +1392,150 @@ Widget _buildSidebar() {
     }
   }
 
- 
-  
-  
   @override
   Widget build(BuildContext context) {
-  final bool isMobile = _isMobileView(context);
-  
-  return Scaffold(
-    //appBar: isMobile ? null : CustomAppBar(),
-    body: Stack(
-      children: [
-        Column(
-          children: [
-            Padding(padding: EdgeInsets.symmetric(vertical: 5),child: _buildToggleableSearch(),),
-            Expanded(
-              child: Stack(
-                children: [
-                  FlutterMap(
-                    mapController: _mapController,
-                    options: MapOptions(
-                      initialCenter: _manhattanCenter,
-                      initialZoom: 12.0,
-                    ),
-                    children: [
-                      TileLayer(
-                        urlTemplate: _getMapUrl(),
-                        subdomains: const ['a', 'b', 'c'],
-                      ),
-                      if (_showHeatmap && _accidentData.isNotEmpty)
-                        HeatMapLayer(
-                          heatMapDataSource: InMemoryHeatMapDataSource(
-                            data: _getHeatmapPoints(),
-                          ),
-                          heatMapOptions: HeatMapOptions(radius: 20, gradient: {
-                            0.2: Colors.blue, // Low intensity
-                            0.5: Colors.yellow, // Medium intensity
-                            0.7: Colors.orange, // High intensity
-                            0.9: Colors.red, // Very high intensity
-                          }),
-                        ),
-                      if (_showTraffic)
-                        PolylineLayer(
-                          polylines: _streetTraffic.entries
-                              .map((entry) {
-                                int index = _routePoints.indexOf(entry.key);
-                                if (index < _routePoints.length - 1) {
-                                  return Polyline(
-                                    points: [
-                                      _routePoints[index],
-                                      _routePoints[index + 1]
-                                    ],
-                                    strokeWidth: 5.0,
-                                    color: entry.value,
-                                  );
-                                }
-                                return null;
-                              })
-                              .whereType<Polyline>()
-                              .toList(),
-                        ),
-                      if (_showTrafficAll && _streetTraffic.isNotEmpty)
-                        PolylineLayer(
-                          polylines: _streetTraffic.entries.map((entry) {
-                            return Polyline(
-                              points: [entry.key],
-                              strokeWidth: 8.0,
-                              color: entry.value.withOpacity(0.7),
-                            );
-                          }).toList(),
-                        ),
-                      if(!_showTraffic)
-                      PolylineLayer(
-                        polylines: [
-                          Polyline(
-                            points: _routePoints,
-                            strokeWidth: 5.0,
-                            color: Colors.blue,
-                          ),
-                        ],
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          if (_origin != null)
-                            Marker(
-                              point: _origin!,
-                              child: const Icon(
-                                Icons.location_on,
-                                color: Colors.red,
-                                size: 40,
-                              ),
-                            ),
-                          if (_destination != null)
-                            Marker(
-                              point: _destination!,
-                              child: const Icon(
-                                Icons.location_pin,
-                                color: Colors.green,
-                                size: 40,
-                              ),
-                            ),
-                          ..._accidentMarkers,
-                        ],
-                      ),
-                    ],
-                  ),
-                  _buildMapOptionsMenu(),
-                  // Conditionally show sidebar based on device type
-                  if (!isMobile) _buildSidebar(),
-                  _buildPredictionBox(),
-                  if (_isLoading)
-                    const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                ],
+    final bool isMobile = _isMobileView(context);
+
+    return Scaffold(
+      //appBar: isMobile ? null : CustomAppBar(),
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 5),
+                child: _buildToggleableSearch(),
               ),
-            ),
-          ],
-        ),
-        // Add mobile location panel at bottom of screen
-        if (isMobile) _buildMobileLocationPanel(),
-      ],
-    ),
-    floatingActionButton: _showRouteSearch
-        ? FloatingActionButton(
-            onPressed: () async {
-              try {
-                await _loadRoute();
-                if (_routePoints.isNotEmpty) {
-                  await Future.wait([
-                    _fetchRouteTraffic(),
-                    _fetchFutureTrafficChange(),
-                  ]);
+              Expanded(
+                child: Stack(
+                  children: [
+                    FlutterMap(
+                      mapController: _mapController,
+                      options: MapOptions(
+                        initialCenter: _manhattanCenter,
+                        initialZoom: 12.0,
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: _getMapUrl(),
+                          subdomains: const ['a', 'b', 'c'],
+                        ),
+                        if (_showHeatmap && _accidentData.isNotEmpty)
+                          HeatMapLayer(
+                            heatMapDataSource: InMemoryHeatMapDataSource(
+                              data: _getHeatmapPoints(),
+                            ),
+                            heatMapOptions:
+                                HeatMapOptions(radius: 20, gradient: {
+                              0.2: Colors.blue, // Low intensity
+                              0.5: Colors.yellow, // Medium intensity
+                              0.7: Colors.orange, // High intensity
+                              0.9: Colors.red, // Very high intensity
+                            }),
+                          ),
+                        if (_showTraffic)
+                          PolylineLayer(
+                            polylines: _streetTraffic.entries
+                                .map((entry) {
+                                  int index = _routePoints.indexOf(entry.key);
+                                  if (index < _routePoints.length - 1) {
+                                    return Polyline(
+                                      points: [
+                                        _routePoints[index],
+                                        _routePoints[index + 1]
+                                      ],
+                                      strokeWidth: 5.0,
+                                      color: entry.value,
+                                    );
+                                  }
+                                  return null;
+                                })
+                                .whereType<Polyline>()
+                                .toList(),
+                          ),
+                        if (_showTrafficAll && _streetTraffic.isNotEmpty)
+                          PolylineLayer(
+                            polylines: _streetTraffic.entries.map((entry) {
+                              return Polyline(
+                                points: [entry.key],
+                                strokeWidth: 8.0,
+                                color: entry.value.withOpacity(0.7),
+                              );
+                            }).toList(),
+                          ),
+                        if (!_showTraffic)
+                          PolylineLayer(
+                            polylines: [
+                              Polyline(
+                                points: _routePoints,
+                                strokeWidth: 5.0,
+                                color: Colors.blue,
+                              ),
+                            ],
+                          ),
+                        MarkerLayer(
+                          markers: [
+                            if (_origin != null)
+                              Marker(
+                                point: _origin!,
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.red,
+                                  size: 40,
+                                ),
+                              ),
+                            if (_destination != null)
+                              Marker(
+                                point: _destination!,
+                                child: const Icon(
+                                  Icons.location_pin,
+                                  color: Colors.green,
+                                  size: 40,
+                                ),
+                              ),
+                            ..._accidentMarkers,// ... spread operator - It adds all elements of a list into another list.
+                            ..._blockageMarkers, // markers: _accidentMarkers + _blockageMarkers
+                          ],
+                        ),
+                      ],
+                    ),
+                    _buildMapOptionsMenu(),
+                    // Conditionally show sidebar based on device type
+                    if (!isMobile) _buildSidebar(),
+                    _buildPredictionBox(),
+                    if (_isLoading)
+                      const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          // Add mobile location panel at bottom of screen
+          if (isMobile) _buildMobileLocationPanel(),
+        ],
+      ),
+      floatingActionButton: _showRouteSearch
+          ? FloatingActionButton(
+              onPressed: () async {
+                try {
+                  await _loadRoute();
+                  if (_routePoints.isNotEmpty) {
+                    await Future.wait([
+                      _fetchRouteTraffic(),
+                      _fetchFutureTrafficChange(),
+                    ]);
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error: $e")),
+                  );
                 }
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Error: $e")),
-                );
-              }
-            },
-            child: const Icon(Icons.directions),
-          )
-        : null,
-  );
-}
+              },
+              child: const Icon(Icons.directions),
+            )
+          : null,
+    );
+  }
 }

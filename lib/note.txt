@@ -1,0 +1,80 @@
+made new route for sending the blockage data to the maps page
+    and it will be fetched using fetchBlockages() function
+    it will return the data as - 
+    {
+    "blockages": {
+        "active_blockages": [
+        {
+            "Borough": "Manhattan",
+            "From Date": "4/26/25",
+            "From Street": "West 40th Street",
+            "Reason": "Unknown",
+            "Time": "01 am to 2 pm",
+            "To Date": "Sat, 26 Apr 2025 00:00:00 GMT",
+            "To Street": "Broadway",
+            "month": 4.0
+        },
+        ],
+        "com_reason": {
+        "DDC reconstruction project, utility installation.": 1,
+        "Unknown": 1,
+        "alternate configuration all phases of construction for pumping concrete.": 4,
+        "use of concrete pumps, boom trucks, and knuckle booms.": 2,
+        "use of knuckle boom for sign work.": 1
+        },
+        "total_blockages": 8
+    },
+    "street_name": "Broadway"
+    }
+
+when loadRoute is called in Maps page
+    fetchBlockages() will run twice - for Origin and destination
+    so we will add both point's blockage(active_blockages) data in a List - blockageResult
+
+    then, we call _generateBlockageMarkers()
+        it will run a for loop for each blockage in the blockageResult list
+
+        --------------
+        it will fetch from street's and to street's coordinates from GeocodeMaps API (https://geocode.maps.co/)
+        fetchStreetCoordinates()
+        will take street name and boro(for city parameter in API URI) as parameter
+        eg -https://geocode.maps.co/search?street=West%2040th%20Street&city=Manhattan&state=NY&country=US&api_key=67f0baebcd569677095236hjyea6002&limit=1
+        [
+                        {
+                            "place_id": 319628560,
+                            "licence": "Data © OpenStreetMap contributors, ODbL 1.0. https://osm.org/copyright",
+                            "osm_type": "way",
+                            "osm_id": 696491643,
+                            "boundingbox": [
+                            "40.7595545",
+                            "40.759677",
+                            "-73.9995946",
+                            "-73.9992994"
+                            ],
+                            "lat": "40.759595",
+                            "lon": "-73.9993989",
+                            "display_name": "West 40th Street, Clinton, Manhattan Community Board 4, Manhattan, New York County, New York, 10018, United States",
+                            "class": "highway",
+                            "type": "primary",
+                            "importance": 0.51001
+                        }
+        ]
+
+        then, we take the middle point of those coords (as blockage is between two streets, we can plot the middle point of them as the blockage point)
+        then, we check if that middle point lies Near our route points (same as accident markers)
+        if they do, we add that mid point to _blockageMarkers list
+
+        finally, add _blockageMarkers to the stack Marker layer to plot them
+
+        all this happens for each blockage in the blockageResult list
+
+issues - 
+    kuch blockages nahi aayenge as API limit is 1 request per second
+        so, only some are request get 200 status code
+    We are taking midpoint of the blockage from and to points and then checking if it lies within 200 meters of any routePoint
+        so, thoda accuracy issue hai.
+    
+
+
+
+

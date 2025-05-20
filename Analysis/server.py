@@ -31,10 +31,8 @@ from paths import (
 app = Flask(__name__)    #  flask app banata hai
 CORS(app)  # Enable CORS for all routes
 
-
 # Load trained model
 # model = joblib.load(TRAFFIC_MODEL_PATH)
-
 
 # Load dataset
 # vdf = pd.read_csv(VOLUME_DATASET_PATH) #it stores the cleaned data with weather
@@ -42,9 +40,9 @@ CORS(app)  # Enable CORS for all routes
 # Speeds dataset
 import json
 
-with open(SPEEDS_DATA_PATH, 'r') as f:
-    data = json.load(f)
-speeds = json_to_csv(data)
+# with open(SPEEDS_DATA_PATH, 'r') as f:
+#     data = json.load(f)
+# speeds = json_to_csv(data)
 
 # Volume data
 df = pd.read_csv(VOLUME_DATA_PATH)
@@ -64,6 +62,35 @@ df_acc['Hour'] = pd.to_datetime(df_acc['Time'], format='%H:%M:%S').dt.hour  # Ho
 def traffic_analysis():
     dashboard = traffic(df, df_acc)
     return dashboard
+
+
+@app.route("/blockages", methods=["GET"])
+def blockage():             # same code as Street analysis blockage
+    # blockage dataset
+    street = request.args.get("street")     #fetch street name from req
+    if not street:
+        return jsonify({"error": "Street name required"}), 400
+    
+    block = scrape_blockage()       # returns cleaned scraped df
+    blocked = block[block['From Street'].str.lower().str.contains(street.lower()) | block['To Street'].str.lower().str.contains(street.lower())]    #filtered for street
+    blocked['To Date'] = pd.to_datetime(blocked['To Date'], errors='coerce')        #ensures that invalid dates are set to NaT to avoid errors
+    blocked['month'] = pd.to_datetime(blocked['From Date'], errors='coerce').dt.month
+
+    response = {}
+    response["street_name"] = street
+    if not blocked.empty:   
+        # total_blockages = blocked['Reason'].nunique()
+        total_blockages = blocked.groupby(['Reason', 'From Street', 'To Street', 'From Date', 'To Date'])['Time'].count().count()  #gives total unique blockages from data
+        active_blockages = blocked[blocked['To Date'] >= pd.Timestamp.today()].to_dict(orient='records')    # gives blockages whose end date are yet to come ,.. thus active
+        # orient - converts the DataFrame into a list of dictionaries, where each row(record) becomes a dictionary
+        com_reason = blocked['Reason'].value_counts().head(5).to_dict()        # gives most common reasons of blockage
+        response["blockages"] = {
+            "total_blockages": int(total_blockages),
+            "active_blockages": active_blockages,
+            "com_reason": com_reason,
+        }
+
+    return(response)
 
 @app.route("/street_analysis", methods=["GET"])         #as were fetching the street input from the UI
 def street_analysis():
@@ -96,7 +123,7 @@ def street_analysis():
     if not blocked.empty:
         # total_blockages = blocked['Reason'].nunique()
         total_blockages = blocked.groupby(['Reason', 'From Street', 'To Street', 'From Date', 'To Date'])['Time'].count().count()  #gives total unique blockages from data
-        active_blockages = blocked[blocked['To Date'] >= pd.Timestamp.today()].to_dict(orient='records')    # gives blockages whoes end date are yet to come ,.. thus active
+        active_blockages = blocked[blocked['To Date'] >= pd.Timestamp.today()].to_dict(orient='records')    # gives blockages whose end date are yet to come ,.. thus active
         # orient - converts the DataFrame into a list of dictionaries, where each row(record) becomes a dictionary
         com_reason = blocked['Reason'].value_counts().head(5).to_dict()        # gives most common reasons of blockage
         # to dict makes it easy to work with json 
@@ -181,11 +208,11 @@ def street_analysis():
         # Hourly Accidents
         hourly_accidents = street_acc.groupby('Hour').size().reset_index(name='Accident_Count')
 
-        # Find the hour with the most accidents
+        # find the hour with the most accidents
         peak_hour = hourly_accidents['Accident_Count'].idxmax()
         colors = [mcolors.to_rgba('red', 1.0) if hour == peak_hour else mcolors.to_rgba('pink') for hour in hourly_accidents['Hour']]
 
-        # Plot accidents by hour
+        # plot accidents by hour
         plt.figure(figsize=(10, 5))
         sns.barplot(x=hourly_accidents['Hour'], y=hourly_accidents['Accident_Count'], palette=colors)
         plt.xlabel("Hour of the Day")
@@ -327,7 +354,7 @@ def fetch_weather_data():
         }
 
 weather_data = fetch_weather_data()
-
+"""
 def predict_traffic(lat,lon,hour, minute):
     try:
         input_data = pd.DataFrame([{ 
@@ -475,7 +502,7 @@ def predict_future():
 #         })
 
 #     return jsonify(predictions)
-
+"""
 if __name__ == '__main__':          #prevents the server from starting unintentionally when the file is not the main file
     # The file you execute using python <filename>.py is treated as the main file.
     app.run(host="0.0.0.0", port=5000, debug=True)              #"0.0.0.0" -> server accessible from any device on netwrk 
